@@ -1,69 +1,169 @@
-﻿using System;
+﻿/*
+ *
+ * This file is part of the DocGOST project.    
+ * Copyright (C) 2018 Vitalii Nechaev.
+ * 
+ * This program is free software; you can redistribute it and/or modify it 
+ * under the terms of the GNU Affero General Public License version 3 as 
+ * published by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Data.SQLite;
 using System.IO;
 using Microsoft.Win32;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
 using DocGOST.Data;
 
 namespace DocGOST
 {
     /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
+    /// В программе производится работа с проектом, который представляет собой базу данных SQLite, сохранённую с расширением .DocGOST.
+    /// Эта база данных состоит из нескольких талиц.
+    /// 1) Таблица класса PerechenItem предназначена для хранения данных перечня элементов.
+    /// 2) Табилца класса SpecificationItem предназначена для хранения данных спецификации.
+    /// В этих двух таблицах ключевые элементы id представляют собой переменную типа int,
+    /// которая комбинирует номер строки документа (первые 20 бит) и номер временного сохранения (последние 12 бит).
+    /// Номер временного сохранения больше или равен 1 и нужен для функционирования кнопок "Отмена" и "Возврат".
+    /// При сохранении проекта данные текущего временного сохранения записываются с номером сохранения 0.
+    /// При закрытии проекта все сохранения, кроме нулевого, удаляются из базы данных прокета.
+    /// 3) Таблица класса OsnNadpis предназначена для хранения граф основной надписи проекта.
+    /// 
+    /// Кроме того, программа использует другую базу данных, в которой есть таблица с данными класса DesignatorDescriptionItem.
+    /// Эта база данных должна находиться в одной папке с exe-файлом программы и её данные не зависят от отрытого в данный момент проекта.
+    /// Она предназначена для расшифровки позиционных обозначений компонентов (например, строка "C" "Конденсатор" "Конденсаторы"). При
+    /// изменении этой базы данных эти изменения коснутся не только текущего проекта, но и всех проектов, которые будут открыты после её изменения.
     /// </summary>
     public partial class MainWindow : Window
     {
+        TempSaves perTempSave, specTempSave, vedomostTempSave; //переменные для работы с номерами временных сохранений (для работы кнопок "Отменить"/"Вернуть")
+        Global id; //Переменная для работы с id данных проекта (т.е. для того, чтобы создавать и расшифровывать id,
+                   //т.к. id сгруппирован из номера текущего сохранённого состояния и номера строки записи - подробнее в Data.PerechenItem.cs и Data.SpecificationItem.cs)
+
+
         public MainWindow()
         {
             InitializeComponent();
+
+            Application.Current.MainWindow.WindowState = WindowState.Maximized;
+
+            id = new Global();
+
+            CommandBinding undoBinding = new CommandBinding(ApplicationCommands.Undo);
+            undoBinding.Executed += UndoButton_Click;
+            this.CommandBindings.Add(undoBinding);
+
+            CommandBinding redoBinding = new CommandBinding(ApplicationCommands.Redo);
+            redoBinding.Executed += RedoButton_Click;
+            this.CommandBindings.Add(redoBinding);
+
+            CommandBinding saveBinding = new CommandBinding(ApplicationCommands.Save);
+            saveBinding.Executed += SaveProject_Click;
+            this.CommandBindings.Add(saveBinding);
+
+            CommandBinding openBinding = new CommandBinding(ApplicationCommands.Open);
+            openBinding.Executed += OpenProject_Click;
+            this.CommandBindings.Add(openBinding);
+
+            CommandBinding newBinding = new CommandBinding(ApplicationCommands.New);
+            newBinding.Executed += CreateProject_Click;
+            this.CommandBindings.Add(newBinding);
+
+            CommandBinding closeBinding = new CommandBinding(ApplicationCommands.Close);
+            closeBinding.Executed += ExitMenuItem_Click;
+            this.CommandBindings.Add(closeBinding);
+            
         }
 
         string projectPath;
 
-        static Database project; //данные для перечня элементов
+        static ProjectDB project; //данные для перечня элементов
 
-        private void createProject_Click(object sender, RoutedEventArgs e)
+        /// <summary> Создание нового проекта </summary>
+        private void CreateProject_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog createDlg = new SaveFileDialog();
-            createDlg.Title = "Создание проекта";            
+            createDlg.Title = "Создание проекта";
             createDlg.Filter = "Файлы проекта (*.docGOST)|*.docGOST";
             createDlg.OverwritePrompt = true;
-            
+            createDlg.FileName = "Проект";
+
             if (createDlg.ShowDialog() == true)
             {
                 projectPath = createDlg.FileName;
-                //Удаляем все ээлементы из дерева проектов
-                for (int i=0;i< projectTreeViewItem.Items.Count; i++)
-                projectTreeViewItem.Items.RemoveAt(i);                
+                //Удаляем все элементы из дерева проектов
+                for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
+                    projectTreeViewItem.Items.RemoveAt(i);
                 //Называем проект в дереве проектов так же, как файл
                 int length = createDlg.SafeFileName.Length;
-                projectTreeViewItem.Header = createDlg.SafeFileName.Substring(0,length-8);
-                TreeViewItem newItem = new TreeViewItem();               
-                newItem.Header = "Перечень элементов";               
-                projectTreeViewItem.Items.Add(newItem);
-                newItem = new TreeViewItem();
-                newItem.Header = "Спецификация";                
-                projectTreeViewItem.Items.Add(newItem);
+                projectTreeViewItem.Header = createDlg.SafeFileName.Substring(0, length - 8);
+
+                TreeViewItem apparatItem = new TreeViewItem();
+                apparatItem.Header = "Устройство 1";
+                apparatItem.Name = "apparatusTereeItem1";
+
+                TreeViewItem docItem = new TreeViewItem();
+                docItem.Header = "Перечень элементов";
+                docItem.IsSelected = true;
+                docItem.Selected += treeSelectionChanged;
+                apparatItem.Items.Add(docItem);
+                docItem = new TreeViewItem();
+                docItem.Header = "Спецификация";
+                docItem.Selected += treeSelectionChanged;
+                apparatItem.Items.Add(docItem);
+                projectTreeViewItem.Items.Add(apparatItem);
 
                 projectTreeViewItem.ExpandSubtree();
 
-                project = new Data.Database(projectPath);
-            }          
+                if (File.Exists(projectPath))
+                {
+                    File.Delete(projectPath);
+                }
+
+                project = new ProjectDB(projectPath);
+
+                //Очищаем рабочую область от предыдущих значений
+                DisplayPerValues(null);
+                DisplaySpecValues(null);
+
+                importMenuItem.IsEnabled = true;
+                osnNadpisMenuItem.IsEnabled = true;
+                osnNadpisButton.IsEnabled = true;
+            }
+
         }
 
-        private void openProject_Click(object sender, RoutedEventArgs e)
+        /// <summary> Переключение между спецификацией и перечнем в дереве проекта </summary>
+        private void treeSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            string header = (sender as TreeViewItem).Header.ToString();
+            if (header == "Перечень элементов")
+            {
+                perechenListView.Visibility = Visibility.Visible;
+                specificationTabControl.Visibility = Visibility.Hidden;
+            }
+            else if (header == "Спецификация")
+            {
+                perechenListView.Visibility = Visibility.Hidden;
+                specificationTabControl.Visibility = Visibility.Visible;
+            }
+        }
+
+        /// <summary> Открытие существующего проекта </summary>
+        private void OpenProject_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openDlg = new OpenFileDialog();
             openDlg.Title = "Выбор файла проекта";
@@ -71,309 +171,1059 @@ namespace DocGOST
             openDlg.Filter = "Файлы проекта (*.docGOST)|*.docGOST";
             if (openDlg.ShowDialog() == true)
             {
-                projectPath = openDlg.FileName;
-                project = new Data.Database(projectPath);
-            }
-            
 
-            DisplayPerechenValues();
-        }
-
-
-        bool atLeastOneApparatusEntered = false;
-
-        
-
-        private void importBOMfromAD_Click(object sender, RoutedEventArgs e)
-        {
-            #region Открытие файла с расшифровкой позиционных обозначений
-            /*
-             * В текстовом файле количество столбцов должно быть 2 или более
-             * 
-             * В наименование может как входить наименование группы компонента, так и нет. Если наименование группы входит, то нельзя группировать элементы по группе.
-             * В намиенование может как входить обозначение документа на поставку, так и нет.
-             * 
-             * Ожидаемый формат текстового файла:
-             *     Столбец 1            Столбец 2       Столбец 3       Столбец 4               Столбец 5           Столбец 6           Столбец N
-             *     Поз. обозначение     Наименование    
-             *     Поз. обозначение     Наименование    Примечание      
-             *     Поз. обозначение     Наименование    Примечание      Документ на поставку    Тип компонента 1    Тип компонента 2    Тип компонента N - 4
-             * 
-             */
-            //Открываем файл для подсчёта количества строк:
-            FileStream fileDesDescr = new FileStream("DesignatorDescriptions.txt", FileMode.Open, FileAccess.Read);
-            StreamReader readerDesDescr = new StreamReader(fileDesDescr, System.Text.Encoding.Default);
-
-            String strDesDescr;
-            int numberOfStrings = 0;
-
-            int numOfStrings = 0;
-
-            while ((strDesDescr = readerDesDescr.ReadLine()) != null)
-            {
-                numOfStrings++;
-            }
-
-            fileDesDescr.Close();
-
-            //Открываем файл для чтения данных:
-            fileDesDescr = new FileStream("DesignatorDescriptions.txt", FileMode.Open, FileAccess.Read);
-            readerDesDescr = new StreamReader(fileDesDescr, System.Text.Encoding.Default);
-            strDesDescr = String.Empty;
-
-            //Создаём массив строк для хранения позиционных обозначений и их описаний
-            DesignatorDescriptions[] desDescrs = new DesignatorDescriptions[numOfStrings];
-
-            for (int i = 0; i < numOfStrings; i++)
-            {
-                strDesDescr = readerDesDescr.ReadLine();
-                string[] temp = new string[4];
-                if (strDesDescr.Split(new Char[] { '\t' }).Length == 3)
+                MessageBoxResult closingDialogResult = MessageBoxResult.No;
+                if ((perTempSave != null) & (specTempSave != null)&(vedomostTempSave != null))
                 {
-                    temp = strDesDescr.Split(new Char[] { '\t' });
-                    desDescrs[i] = new DesignatorDescriptions(temp[0], temp[1], temp[2]);
-                }
-            }
-
-            fileDesDescr.Close();
-            #endregion
-
-
-            #region Открытие файла BOM и формирование массива строк перечня элементов
-            OpenFileDialog openDlg = new OpenFileDialog();
-            openDlg.Title = "Выбор файла данных для перечня элементов";
-            openDlg.Multiselect = false;
-            openDlg.Filter = "Файлы BOM (*.txt)|*.txt";
-            openDlg.ShowDialog();
-
-            string destinationFilePath = openDlg.FileName;
-
-            //Открываем файл для подсчёта количества строк:
-            FileStream file = new FileStream(@destinationFilePath, FileMode.Open, FileAccess.Read);
-            StreamReader reader = new StreamReader(file, System.Text.Encoding.Default);
-
-            String str;
-
-            numberOfStrings = 0;
-
-            while ((str = reader.ReadLine()) != null)
-            {
-                numberOfStrings++;
-            }
-
-            file.Close();
-            //Открываем файл для чтения данных:
-            file = new FileStream(@destinationFilePath, FileMode.Open, FileAccess.Read);
-            reader = new StreamReader(file, System.Text.Encoding.Default);
-            str = String.Empty;
-
-            //если данные уже добавлялись, предлагаем ввести наименование нового устройства
-            /*if (project.isPerechenDataEmpty() != true)
-            {
-                //Вставляем назавание первого устройства в список, если этого ещё не произошло
-                if (atLeastOneApparatusEntered == false)
-                {
-                    NewApparatusName apparatNameWindow = new NewApparatusName();
-                    apparatNameWindow.captionLabel.Content = "Введите позиционное обозначение, наименование и примечание для уже введённого устройства:";
-                    apparatNameWindow.ShowDialog();
-                    //Вставляем наименование первого устройства в начало списка
-                    PerechenData temp = new PerechenData();
-                    temp.designator = apparatNameWindow.pozTextBox.Text;
-                    temp.name = apparatNameWindow.nameTextBox.Text;
-                    temp.quantity = "1";
-                    temp.note = apparatNameWindow.noteTextBox.Text;
-                    temp.docum = String.Empty;
-                    temp.type = "Составное устройство";
-                    temp.group = String.Empty;
-                    temp.groupPlural = String.Empty;
-                    pData.Insert(0, temp);
-                    numberOfValidStrings++;
-                    atLeastOneApparatusEntered = true;
-
-                    apparatNameWindow = new NewApparatusName();
-                    apparatNameWindow.captionLabel.Content = "Введите позиционное обозначение, наименование и примечание для нового устройства:";
-                    apparatNameWindow.ShowDialog();
-                     //Добавляем пустую строку
-                     //temp = new PerechenData();
-                     //pData.Add(temp);
-                    temp = new PerechenData();
-                    //Добавляем наименование текущего устройства
-                    temp.designator = apparatNameWindow.pozTextBox.Text;
-                    temp.name = apparatNameWindow.nameTextBox.Text;
-                    temp.quantity = "1";
-                    temp.note = apparatNameWindow.noteTextBox.Text;
-                    temp.docum = String.Empty;
-                    temp.type = "Составное устройство";
-                    temp.group = String.Empty;
-                    temp.groupPlural = String.Empty;
-                    pData.Add(temp);
-                    numberOfValidStrings++;
-                }
-                else
-                {
-                    //Вставляем наименование текущего устройства в список
-                    NewApparatusName apparatNameWindow = new NewApparatusName();
-                    apparatNameWindow.ShowDialog();
-                    PerechenData temp = new PerechenData();
-                    temp.designator = apparatNameWindow.pozTextBox.Text;
-                    temp.name = apparatNameWindow.nameTextBox.Text;
-                    temp.quantity = "1";
-                    temp.note = apparatNameWindow.noteTextBox.Text;
-                    temp.docum = String.Empty;
-                    temp.type = "Составное устройство";
-                    temp.group = String.Empty;
-                    temp.groupPlural = String.Empty;
-                    pData.Add(temp);
-                    numberOfValidStrings++;
-                }
-
-            }*/
-
-            #region Заполнение массива несгруппированными значениями
-            //reader.ReadLine(); //Пропускаем первую строку - строку с названиями колонок
-            for (int i = 0; i < numberOfStrings; i++)
-            {
-                str = reader.ReadLine();
-                Data.PerechenItem temp = new Data.PerechenItem();
-                if (str.Split(new Char[] { '\t' }).Length > 1)
-                    if (str[0] == '\"')
+                    if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
+                    (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
+                    (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
                     {
-                        temp.designator = str.Split(new Char[] { '\t' })[0];
-                        temp.designator = temp.designator.Substring(1, temp.designator.Length - 2);
-                        temp.name = str.Split(new Char[] { '\t' })[1];
-                        temp.name = temp.name.Substring(1, temp.name.Length - 2);
-                        temp.quantity = "1";
-                        temp.note = String.Empty;
-                        temp.docum = String.Empty;
-                        temp.type = String.Empty;
-                        temp.group = String.Empty;
-                        temp.groupPlural = String.Empty;
+                        closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNoCancel);
+                        if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent());
+                    }
+                    project.DeleteTempData();
+                }
+                   
 
-                        int numOfColumns = str.Split(new Char[] { '\t' }).Length;
+                if (closingDialogResult != MessageBoxResult.Cancel)
+                {
+                    projectPath = openDlg.FileName;
+                    project = new Data.ProjectDB(projectPath);
 
-                        if (numOfColumns == 3)
-                        {
-                            temp.note = str.Split(new Char[] { '\t' })[2];
-                            temp.note = temp.note.Substring(1, temp.note.Length - 2);
-                        }
-                        else if (numOfColumns > 3)
-                        {
-                            temp.note = str.Split(new Char[] { '\t' })[2];
-                            temp.note = temp.note.Substring(1, temp.note.Length - 2);
-                            temp.docum = str.Split(new Char[] { '\t' })[3];
-                            temp.docum = temp.docum.Substring(1, temp.docum.Length - 2);
+                    perTempSave = new TempSaves();
+                    specTempSave = new TempSaves();
+                    vedomostTempSave = new TempSaves();
 
+                    //Удаляем все элементы из дерева проектов
+                    for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
+                        projectTreeViewItem.Items.RemoveAt(i);
+                    //Называем проект в дереве проектов так же, как файл
+                    int length = openDlg.SafeFileName.Length;
+                    projectTreeViewItem.Header = openDlg.SafeFileName.Substring(0, length - 8);
 
-                            if (numOfColumns > 4)
-                            {
-                                for (int j = 5; j <= numOfColumns; j++)
-                                {
-                                    if ((temp.type == String.Empty) | (temp.type == "\"\"")) temp.type = str.Split(new Char[] { '\t' })[j - 1];
-                                    if (temp.type != String.Empty) temp.type = temp.type.Substring(1, temp.type.Length - 2);
-                                }
-                            }
-                        }
+                    TreeViewItem apparatItem = new TreeViewItem();
+                    apparatItem.Header = "Устройство 1";
+                    apparatItem.Name = "apparatusTereeItem1";
 
-                        //Добавляем документ на поставку к наименованию элемента:
-                        //if (addDocumToNameCheckBox.IsChecked == true)
-                        //    temp.name += ' ' + temp.docum;
+                    TreeViewItem docItem = new TreeViewItem();
+                    docItem.Header = "Перечень элементов";
+                    docItem.IsSelected = true;
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    docItem = new TreeViewItem();
+                    docItem.Header = "Спецификация";
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    projectTreeViewItem.Items.Add(apparatItem);
 
-                        //Добавляем тип компонента на основе его позиционного обозначения:
-                        foreach (DesignatorDescriptions desDescr in desDescrs)
-                            if ((desDescr.Designator == temp.designator.Substring(0, 1)) | (desDescr.Designator == temp.designator.Substring(0, 2)))
-                            {
-                                temp.group = desDescr.Description.Substring(0, 1).ToUpper() + desDescr.Description.Substring(1, desDescr.Description.Length - 1).ToLower();
-                                temp.groupPlural = desDescr.DescriptionPlural.Substring(0, 1).ToUpper() + desDescr.DescriptionPlural.Substring(1, desDescr.DescriptionPlural.Length - 1).ToLower();
-                            }
+                    projectTreeViewItem.ExpandSubtree();
 
-                        project.AddPerechenItem(temp);
+                    //Копируем данные во временные
+                    perTempSave = new TempSaves();
+                    for (int i = 1; i <= project.GetPerechenLength(0); i++)
+                    {
+                        PerechenItem perItem = new PerechenItem();
+                        perItem = project.GetPerechenItem(i, 0);
+                        perItem.id = id.makeID(i, perTempSave.GetCurrent());
+                        project.AddPerechenItem(perItem);
+                    }
+                    perTempSave.ProjectSaved();
+
+                    for (int i = 1; i <= project.GetSpecLength(0); i++)
+                    {
+                        SpecificationItem specItem = new SpecificationItem();
+                        specItem = project.GetSpecItem(i, 0);
+                        specItem.id = id.makeID(i, specTempSave.GetCurrent());
+                        project.AddSpecItem(specItem);
                     }
 
+                    for (int i = 1; i <= project.GetVedomostLength(0); i++)
+                    {
+                        VedomostItem vedomostItem = new VedomostItem();
+                        vedomostItem = project.GetVedomostItem(i, 0);
+                        vedomostItem.id = id.makeID(i, specTempSave.GetCurrent());
+                        project.AddVedomostItem(vedomostItem);
+                    }
+                    specTempSave.ProjectSaved();
+
+                    specTempSave.ProjectSaved();
+                    DisplayAllValues();
+
+                    importMenuItem.IsEnabled = true;
+                    saveProjectMenuItem.IsEnabled = true;
+                    undoMenuItem.IsEnabled = true;
+                    redoMenuItem.IsEnabled = true;
+                    createPdfMenuItem.IsEnabled = true;
+                    osnNadpisMenuItem.IsEnabled = true;
+                    osnNadpisButton.IsEnabled = true;
+                }
             }
-            #endregion
-
-            DisplayPerechenValues();
-
-
-            #endregion
         }
 
-        private void DisplayPerechenValues()
+        /// <summary> Импорт данных из проекта Altium Designer (.PrjPcb) </summary>
+        private void ImportPrjPcbfromAD_Click(object sender, RoutedEventArgs e)
         {
-            int length = project.GetPerechenLength();
+
+            OpenFileDialog openDlg = new OpenFileDialog();
+            openDlg.Title = "Выбор файла проекта AltiumDesigner";
+            openDlg.Multiselect = false;
+            openDlg.Filter = "Файлы проекта AD (*.PrjPcb)|*.PrjPcb";
+            if (openDlg.ShowDialog() == true)
+            {
+                perTempSave = new TempSaves();
+                specTempSave = new TempSaves();
+                vedomostTempSave = new TempSaves();
+
+                #region Открытие и парсинг файла проекта Altium
+                string pcbPrjFilePath = openDlg.FileName;
+                string pcbPrjFolderPath = Path.GetDirectoryName(pcbPrjFilePath);
+
+                //Открываем файл проекта AD для поиска имён файлов схемы:
+                FileStream pcbPrjFile = new FileStream(pcbPrjFilePath, FileMode.Open, FileAccess.Read);
+                StreamReader pcbPrjReader = new StreamReader(pcbPrjFile, System.Text.Encoding.Default);
+
+                String prjStr;
+
+                int numberOfStrings = 0;
+
+                List<List<ComponentProperties>> componentsList = new List<List<ComponentProperties>>();
+                List<ComponentProperties> componentPropList = new List<ComponentProperties>();
+
+                List<ComponentProperties> otherPropList = new List<ComponentProperties>();
+
+                SpecificationItem plataSpecItem = new SpecificationItem(); //для хранения записи печатной платы для добавления в раздел "Детали" спецификации
+
+                plataSpecItem.position = "Авто";               
+                plataSpecItem.name = "Плата печатная";                
+                plataSpecItem.quantity = "1";
+                plataSpecItem.spSection = (int)Global.SpSections.Details;
+
+                while ((prjStr = pcbPrjReader.ReadLine()) != null)
+                {
+                    string schPath = String.Empty;
+                    if (prjStr.Length > 13)
+                        if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "SchDoc"))
+                        {
+                            schPath = Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
+
+                            //Открываем файл схемы AD для получения списка параметров электронных компонентов:
+                            FileStream schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+                            StreamReader schReader = new StreamReader(schFile, System.Text.Encoding.Default);
+
+                            string schStr = String.Empty;
+
+                            bool isNoBom = false;
+                            bool isComponent = false;
+
+                            while ((schStr = schReader.ReadLine()) != null)
+                            {
+                                string[] schStrArray = schStr.Split(new Char[] { '|' });
+                                for (int i = 0; i < schStrArray.Length - 1; i++)
+                                {                                    
+                                    if (isComponent == true)
+                                    {
+                                        if (schStrArray[i].Length >= 23)
+                                            if (schStrArray[i].Substring(0, 23) == "COMPONENTKINDVERSION2=5") isNoBom = true;
+
+                                        if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
+                                            if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                            {
+                                                ComponentProperties prop = new ComponentProperties();
+                                                prop.Name = schStrArray[i + 1].Substring(5);
+                                                prop.Text = schStrArray[i].Substring(5);
+                                                if (isNoBom == false)
+                                                //if ((prop.Name == "Designator") | (prop.Name == "SType") | (prop.Name == "Docum") | (prop.Name == "Note"))
+                                                componentPropList.Add(prop);
+                                            }
+
+                                        if (schStrArray[i].Length >= 8)
+                                            if ((schStrArray[i].Substring(0, 7) == "HEADER=") |((schStrArray[i].Substring(0, 8) == "RECORD=1")&(schStrArray[i].Length==8))) //Считаем, что описание каждого компонента заканчивается этой фразой
+                                            {
+                                                if ((isNoBom == false) & (componentPropList.Count > 0))
+                                                {
+                                                    componentsList.Add(componentPropList);
+                                                    
+                                                    numberOfStrings++;
+                                                }
+
+                                                isNoBom = false;
+                                                isComponent = false;
+
+                                                componentPropList = new List<ComponentProperties>();
+                                            }
+                                    }
+                                    else if (isComponent == false)
+                                    {
+                                        //Запись полей основной надписи в базу данных проекта, если они встречаются в файле Sch:
+                                        if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
+                                            if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                            {
+                                                ComponentProperties prop = new ComponentProperties();
+                                                prop.Name = schStrArray[i + 1].Substring(5);
+                                                prop.Text = schStrArray[i].Substring(5);
+
+                                                otherPropList.Add(prop);
+                                            }
+                                    }
+                                    //Теперь ищем все записи компонента и сохраняем их
+                                    if (schStrArray[i].Length == 8)
+                                        if (schStrArray[i].Substring(0, 8) == "RECORD=1") //Считаем, что описание каждого компонента начинается этой фразой
+                                            isComponent = true;
+                                }
+                            }
+
+                            //Работа с составными именами типа ='prop1'+'prop2'
+                            for (int i = 0; i < otherPropList.Count; i++)
+                            {
+                                otherPropList[i].Text = MakeComplexStringIfItIs(otherPropList[i].Text, otherPropList);
+                            }
+
+                            schFile.Close();
+                        }
+                        else if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "PcbDoc"))
+                        {
+                            //Добавляем плату в спецификацию ВРЕМЕННО! в раздел "Детали"                            
+                            plataSpecItem.oboznachenie = prjStr.Substring(13, prjStr.Length - 20);
+                            plataSpecItem.oboznachenie = plataSpecItem.oboznachenie.Split(new char[] { '\\' }).Last();
+                            plataSpecItem.name = "Плата печатная";                            
+
+                        }
+
+                }
+
+                pcbPrjFile.Close();
+                #endregion
+
+
+
+                //Записываем в новый список названия всех свойств компонентов
+                List<string> propNames = new List<string>();
+                propNames.Add("<Не задано>");
+
+                for (int i = 0; i < numberOfStrings; i++)
+                {
+                    for (int j = 0; j < (componentsList[i]).Count; j++)
+                    {
+                        string name = componentsList[i][j].Name;
+                        if (propNames.Contains(name) == false) propNames.Add(name);
+                    }
+                }
+
+                ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
+
+                importPcbPrjWindow.designatorComboBox.ItemsSource = propNames;
+                if (propNames.Contains("Designator")) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == "Designator");
+                else
+                {
+                    importPcbPrjWindow.designatorComboBox.SelectedIndex = 0;
+                    importPcbPrjWindow.nextButton.IsEnabled = false;
+                    importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+                }
+                importPcbPrjWindow.nameComboBox.ItemsSource = propNames;
+                if (propNames.Contains("SType")) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == "SType");
+                else
+                {
+                    importPcbPrjWindow.nameComboBox.SelectedIndex = 0;
+                    importPcbPrjWindow.nextButton.IsEnabled = false;
+                    importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+                }
+
+                importPcbPrjWindow.documComboBox.ItemsSource = propNames;
+                if (propNames.Contains("Docum")) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == "Docum");
+                else importPcbPrjWindow.documComboBox.SelectedIndex = 0;
+                importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
+                if (propNames.Contains("Note")) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == "Note");
+                else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
+
+                if (importPcbPrjWindow.ShowDialog() == true)
+                {
+                    #region Заполнение списков для базы данных проекта
+                    createPdfMenuItem.IsEnabled = true;
+
+                    List<PerechenItem> perechenList = new List<PerechenItem>();
+                    List<SpecificationItem> specList = new List<SpecificationItem>();
+                    List<VedomostItem> vedomostList = new List<VedomostItem>();
+
+                    int numberOfValidStrings = 0;
+
+                    SpecificationItem tempSpecItem = new SpecificationItem();
+                    numberOfValidStrings++;
+                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    tempSpecItem.name = "Схема электрическая принципиальная";
+                    tempSpecItem.quantity = String.Empty;
+                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    specList.Add(tempSpecItem);
+
+                    tempSpecItem = new SpecificationItem();
+                    numberOfValidStrings++;
+                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    tempSpecItem.name = "Перечень элементов";
+                    tempSpecItem.quantity = String.Empty;
+                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    specList.Add(tempSpecItem);
+
+                    numberOfValidStrings++;
+                    plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    specList.Add(plataSpecItem);
+
+
+                    for (int i = 0; i < numberOfStrings; i++)
+                    {
+                        PerechenItem tempPerechen = new PerechenItem();
+                        SpecificationItem tempSpecification = new SpecificationItem();
+                        VedomostItem tempVedomost = new VedomostItem();
+
+                        numberOfValidStrings++;
+                        tempPerechen.id = id.makeID(numberOfValidStrings, perTempSave.GetCurrent());
+                        tempPerechen.designator = string.Empty;
+                        tempPerechen.name = string.Empty;
+                        tempPerechen.quantity = "1";
+                        tempPerechen.note = String.Empty;
+                        tempPerechen.docum = String.Empty;
+                        tempPerechen.type = String.Empty;
+                        tempPerechen.group = String.Empty;
+                        tempPerechen.groupPlural = String.Empty;
+                        tempPerechen.isNameUnderlinded = false;
+                        
+                        for (int j = 0; j < (componentsList[i]).Count; j++)
+                        {
+                            ComponentProperties prop;
+                            try
+                            {
+                                prop = (componentsList[i])[j];
+
+                                string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
+                                string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
+                                string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
+                                string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
+
+                                if (prop.Name == designatorName) tempPerechen.designator = prop.Text;
+                                else if (prop.Name == nameName) tempPerechen.name = prop.Text;
+                                else if (prop.Name == documName) tempPerechen.docum = prop.Text;
+                                else if (prop.Name == noteName) tempPerechen.note = prop.Text;
+                            }
+                            catch
+                            {
+                                MessageBox.Show(j.ToString() + "/" + ((componentsList[i]).Capacity - 1).ToString() + ' ' + i.ToString() + "/" + numberOfStrings);
+                            }
+
+
+                        }
+
+                        tempSpecification.id = tempPerechen.id;
+                        tempSpecification.spSection = (int)Global.SpSections.Other;
+                        tempSpecification.format = String.Empty;
+                        tempSpecification.zona = String.Empty;
+                        tempSpecification.position = String.Empty;
+                        tempSpecification.oboznachenie = String.Empty;
+                        tempSpecification.name = tempPerechen.name;
+                        tempSpecification.quantity = "1";
+                        tempSpecification.note = tempPerechen.designator;
+                        tempSpecification.group = String.Empty;
+                        tempSpecification.docum = tempPerechen.docum;
+                        tempSpecification.designator = tempPerechen.designator;
+                        tempSpecification.isNameUnderlined = false;
+
+                        tempVedomost.id = tempPerechen.id;
+                        tempVedomost.name = tempPerechen.name;
+                        tempVedomost.kod = String.Empty;
+                        tempVedomost.docum = tempPerechen.docum;
+                        tempVedomost.supplier = String.Empty;
+                        tempVedomost.belongs = String.Empty;
+                        tempVedomost.quantityIzdelie = "1";
+                        tempVedomost.quantityComplects = String.Empty;
+                        tempVedomost.quantityTotal = "1";
+                        tempVedomost.note = String.Empty;
+
+                        string group = string.Empty;
+
+                        DesignatorDB designDB = new DesignatorDB();
+                        int descrDBLength = designDB.GetLength();
+
+                        for (int j = 0; j < descrDBLength; j++)
+                        {
+                            DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
+
+                          if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
+                            {
+                                tempPerechen.group = desDescr.Group.Substring(0, 1).ToUpper() + desDescr.Group.Substring(1, desDescr.Group.Length - 1).ToLower();
+                                tempPerechen.groupPlural = desDescr.GroupPlural.Substring(0, 1).ToUpper() + desDescr.GroupPlural.Substring(1, desDescr.GroupPlural.Length - 1).ToLower();
+
+                                group = tempPerechen.group;
+
+                                tempSpecification.group = group;
+                                tempVedomost.group = group;
+                            }
+                        }
+
+
+                        tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
+
+                        perechenList.Add(tempPerechen);
+                        specList.Add(tempSpecification);
+                        vedomostList.Add(tempVedomost);
+
+                    }
+
+                    //Сортировка по поз. обозначению
+                    List<PerechenItem> perechenListSorted = new List<PerechenItem>();
+                    List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
+                    List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
+
+                    perechenListSorted = perechenList.OrderBy(x => x.designator).ToList();
+                    specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => x.designator).ToList();
+                    vedomostListSorted = vedomostList.OrderBy(x => x.designator).ToList();
+
+                    for (int i = 0; i < specOtherListSorted.Count; i++)
+                    {
+                        perechenListSorted[i].id = id.makeID(i + 1, perTempSave.GetCurrent());
+                        specOtherListSorted[i].id = id.makeID(i + 1 + (numberOfValidStrings - specOtherListSorted.Count), perTempSave.GetCurrent());
+                    }
+
+                    saveProjectMenuItem.IsEnabled = true;
+                    undoMenuItem.IsEnabled = true;
+                    redoMenuItem.IsEnabled = true;
+                    #endregion
+                    groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted);
+                }
+            }
+        }
+
+        /// <summary> Чтение строк вида ='Str1'+'Str2' при чтении данных из проекта Altium Designer (.PrjPcb) </summary>
+        private string MakeComplexStringIfItIs(string text, List<ComponentProperties> componentsList)
+        {
+            bool isComplexName = false;
+            string result = text;
+
+            if (text[0] == '=')
+            {
+                isComplexName = true;
+                string tempStr = String.Empty;
+                string origStr = text.Substring(1); //Удаляем пробелы и знак равно в начале строки
+                string[] otherPropNames = origStr.Split(new char[] { '+' });
+                for (int j = 0; j < otherPropNames.Length; j++)
+                {
+                    if ((otherPropNames[j].First() == '\'') & (otherPropNames[j].Last() == '\''))
+                        tempStr += otherPropNames[j].Substring(1, otherPropNames[j].Length - 2);
+                    else
+                    {
+                        try
+                        {
+                            tempStr += componentsList.Where(x => x.Name == otherPropNames[j]).First().Text;
+                        }
+                        catch
+                        {
+                            isComplexName = false;
+                        }
+                    }
+                }
+                if (isComplexName) result = tempStr;
+            }
+            return result;
+        }
+
+        /// <summary> Отображение данных спецификации и перечня пользователю из текущего временного сохранения проекта </summary>
+        private void DisplayAllValues()
+        {
+            int length = project.GetPerechenLength(perTempSave.GetCurrent());
             //Вывод несгруппированных строк в окно программы:
-            List<PerechenDataToDisplay> result = new List<PerechenDataToDisplay>(length);
-            numberOfValidStringsLabel.Content = length;
-            //foreach (PerechenItem pd in pData) result.Add(new PerechenDataToDisplay(pd.designator, pd.name, pd.note, pd.docum));
+            List<PerechenItem> resultPer = new List<PerechenItem>(length);
+
             for (int i = 1; i <= length; i++)
             {
-                Data.PerechenItem pd = project.GetPerechenItem(i);
-              result.Add(new PerechenDataToDisplay(pd.designator, pd.group + ' ' + pd.name + ' ' + pd.docum, pd.note));
+                resultPer.Add(project.GetPerechenItem(i, perTempSave.GetCurrent()));
             }
 
-            PerechenDataGrid.ItemsSource = result;
+            DisplayPerValues(resultPer);
 
-            PerechenDataGrid.Columns[0].Width = new DataGridLength(120, DataGridLengthUnitType.Star);
-            PerechenDataGrid.Columns[1].Width = new DataGridLength(380, DataGridLengthUnitType.Star);
-            PerechenDataGrid.Columns[2].Width = new DataGridLength(90, DataGridLengthUnitType.Star);
+            length = project.GetSpecLength(specTempSave.GetCurrent());
+            //Вывод несгруппированных строк в окно программы:
+            List<SpecificationItem> resultSpec = new List<SpecificationItem>(length);
+
+            for (int i = 1; i <= length; i++)
+            {
+                resultSpec.Add(project.GetSpecItem(i, specTempSave.GetCurrent()));
+            }
+
+            DisplaySpecValues(resultSpec);
+
+
         }
 
-        private void createPdf_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Отображение данных спецификации для пользователя
+        /// </summary>
+        /// <param name="pData"> Список с данными спецификации для отображения</param>
+        private void DisplaySpecValues(List<SpecificationItem> sData)
+        {
+            //Вывод данных в окно программы:
+            if (sData == null)
+            {
+                documSpecListView.ItemsSource = null;
+                compleksiSpecListView.ItemsSource = null;
+                sborEdSpecListView.ItemsSource = null;
+                detailsSpecListView.ItemsSource = null;
+                standartSpecListView.ItemsSource = null;
+                otherSpecListView.ItemsSource = null;
+                materialsSpecListView.ItemsSource = null;
+                complectsSpecListView.ItemsSource = null;
+            }
+            else
+            {
+                
+                //Заполнение раздела "Документация"
+                
+                List<SpecificationItem> documRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Documentation)).ToList();               
+                documSpecListView.ItemsSource = documRazdelList;
+
+                //Заполнение раздела "Комплексы"
+                 List<SpecificationItem> compleksiRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Compleksi)).ToList();                
+                compleksiSpecListView.ItemsSource = compleksiRazdelList;
+
+                //Заполнение раздела "Сборочные единицы"
+                List<SpecificationItem> sborEdRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.SborEd)).ToList();
+               sborEdSpecListView.ItemsSource = sborEdRazdelList;
+
+                //Заполнение раздела "Детали"
+                List<SpecificationItem> detailsRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Details)).ToList();
+                detailsSpecListView.ItemsSource = detailsRazdelList;
+
+                //Заполнение раздела "Стандартные изделия"
+                List<SpecificationItem> standartRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Standard)).ToList();
+                standartSpecListView.ItemsSource = standartRazdelList;
+
+                //Заполнение раздела "Прочие"
+                List<SpecificationItem> otherRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Other)).ToList();
+                otherRazdelList = sData.Where(x => x.spSection == (int)Global.SpSections.Other).ToList();
+               otherSpecListView.ItemsSource = otherRazdelList;
+
+                //Заполнение раздела "Материалы"
+                List<SpecificationItem> materialsRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Materials)).ToList();
+                materialsSpecListView.ItemsSource = materialsRazdelList;
+
+                //Заполнение раздела "Комплекты"
+                List<SpecificationItem> complectsRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Compleсts)).ToList();
+                complectsSpecListView.ItemsSource = complectsRazdelList;
+            }
+
+        }
+
+        /// <summary>
+        /// Отображение данных перечня для пользователя
+        /// </summary>
+        /// <param name="pData"> Список с данными перечня элементов для отображения</param>
+        private void DisplayPerValues(List<PerechenItem> pData)
+        {
+            //Вывод данных в окно программы: 
+            perechenListView.ItemsSource = pData;
+            
+            //Вставляем подчёркивания:
+           /* foreach (ListViewItem item in perechenListView.Items)
+            {
+                //if (item.Name)
+                TextBlock[] tb = new TextBlock[2];
+                tb[0].TextDecorations = TextDecorations.Underline;
+                tb[0].Text = "fdfdf";
+                tb[1].TextDecorations = TextDecorations.Underline;
+                tb[1].Text = "asdfasdf";
+                item.Content = tb;
+            }*/
+        }
+
+        /// <summary> Создание PDF-файлов перечня и спецификации </summary>
+        private void CreatePdf_Click(object sender, RoutedEventArgs e)
         {
             string pdfPath = "ПЭ3.pdf";
             PdfOperations pdf = new PdfOperations(projectPath);
             int startPage = (startFromSecondCheckBox.IsChecked == false) ? 1 : 2;
             bool addListRegistr = (addListRegistrCheckBox.IsChecked == true);
-            pdf.CreatePerechen(pdfPath,startPage, addListRegistr);
-           
+            pdf.CreatePerechen(pdfPath, startPage, addListRegistr, perTempSave.GetCurrent());
+            System.Diagnostics.Process.Start(pdfPath);
+
+            pdfPath = "Спецификация.pdf";
+            pdf = new PdfOperations(projectPath);
+            pdf.CreateSpecification(pdfPath, startPage, addListRegistr, specTempSave.GetCurrent());
+            System.Diagnostics.Process.Start(pdfPath);
         }
 
-       
+        /// <summary> При закрытии окна программы выполняется проверка, сохранён ли проект, и показывается соответствующее диалоговое окно </summary>        
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            
-
+            MessageBoxResult closingDialogResult = new MessageBoxResult();
+            if ((perTempSave != null) & (specTempSave != null) & (vedomostTempSave != null))
+            {
+                if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
+                    (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
+                    (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
+                {
+                    closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNo);
+                    if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetLastSavedState());
+                }
+                project.DeleteTempData();
+            }                
         }
 
-        private void groupByName_Click(object sender, RoutedEventArgs e)
+        /// <summary> Группировка элементов перечня и спецификации, их запись в базу данных проекта и отображение пользователю </summary>
+        /// <remarks> Вызывается после импорта новых данных из файла </remarks>
+        /// <param name="pData"> Список с данными для перечня элементов, которые будут сгруппированы</param>
+        /// <param name="sData"> Список с данными спецификации без данных раздела "Прочие изделия"</param>
+        /// <param name="sOtherData"> Список с данными спецификации из раздела данных "Прочие изделия", которые будут сгруппированы</param>
+        private void groupByName(List<PerechenItem> pData, List<SpecificationItem> sData, List<SpecificationItem> sOtherData)
         {
-            List<PerechenItem> pData = new List<PerechenItem>();
-            int numberOfValidStrings = project.GetPerechenLength();
 
-            for (int i = 1; i <= numberOfValidStrings; i++)
+            int numOfPerechenValidStrings = pData.Count;
+            int numOfSpecificationStrings = sOtherData.Count;
+
+
+            for (int i = 1; i <= numOfPerechenValidStrings; i++)
             {
-                pData.Add(project.GetPerechenItem(i));
+                pData.Add(project.GetPerechenItem(i, perTempSave.GetCurrent()));
             }
 
-            (new PerechenOperations()).groupPerechenElements(ref pData, ref numberOfValidStrings);
+            (new PerechenOperations()).groupPerechenElements(ref pData, ref numOfPerechenValidStrings);
 
-            //Вывод сгруппированных строк в окно программы:
-            List<PerechenDataToDisplay> result = new List<PerechenDataToDisplay>(numberOfValidStrings);
 
-            //foreach (PerechenItem pd in pData) result.Add(new PerechenDataToDisplay(pd.designator, pd.name, pd.note, pd.docum));
-            for (int i = 0; i < result.Capacity; i++)
+
+            sOtherData = (new SpecificationOperations()).groupSpecificationElements(sOtherData, ref numOfSpecificationStrings);
+
+            //Запись значений в файл и вывод сгруппированных строк в окно программы:
+
+            List<PerechenItem> perResult = new List<PerechenItem>(numOfPerechenValidStrings);
+            List<SpecificationItem> specResult = new List<SpecificationItem>(numOfSpecificationStrings + sData.Count);
+
+            for (int i = 0; i < numOfPerechenValidStrings; i++)
             {
-                Data.PerechenItem pd = pData[i];
-                result.Add(new PerechenDataToDisplay(pd.designator, pd.name + ' ' + pd.docum, pd.note));
+                PerechenItem pd = pData[i];
+                pd.name += " " + pd.docum;
+                pd.id = id.makeID(i + 1, perTempSave.GetCurrent());
+                perResult.Add(pd);
+                project.AddPerechenItem(pd);
             }
 
-            PerechenDataGrid.ItemsSource = result;
-            PerechenDataGrid.Columns[0].Width = new DataGridLength(120, DataGridLengthUnitType.Star);
-            PerechenDataGrid.Columns[1].Width = new DataGridLength(380, DataGridLengthUnitType.Star);
-            PerechenDataGrid.Columns[2].Width = new DataGridLength(90, DataGridLengthUnitType.Star);
+
+
+            for (int i = 0; i < numOfSpecificationStrings + sData.Count; i++)
+            {
+                if (i < sData.Count())
+                {
+                    SpecificationItem sd = sData[i];
+                    sd.id = id.makeID(i + 1, specTempSave.GetCurrent());
+                    specResult.Add(sd);
+                    project.AddSpecItem(sd);
+                }
+                else
+                {
+                    SpecificationItem sd = sOtherData[i - sData.Count()];
+                    sd.id = id.makeID(i + 1, specTempSave.GetCurrent());
+                    specResult.Add(sd);
+                    project.AddSpecItem(sd);
+                }
+            }
+
+            perechenListView.ItemsSource = perResult;
+            DisplayAllValues();
         }
 
+        /// <summary> Редактирование основной надписи </summary>
         private void osnNadpisButton_Click(object sender, RoutedEventArgs e)
         {
             OsnNadpisWindow osnNadpis;
             osnNadpis = new OsnNadpisWindow(projectPath);
             //Показываем диалоговое окно для заполнения граф основной надписи
             osnNadpis.ShowDialog();
-            
+
             osnNadpis.Close();
+        }
+
+        /// <summary> Редактирование расшифровок позиционных обозначений </summary>
+        private void desigDescrButton_Click(object sender, RoutedEventArgs e)
+        {
+            DesigDescrWindow ddWindow = new DesigDescrWindow();
+            ddWindow.ShowDialog();
+        }
+
+        /// <summary> Изменение ширины столбцов элементов ListView при изменении размеров окна </summary>
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            double coef = (perechenListView.ActualWidth - 270) / 742; //Изначально ширина Listview 1012, 3 кнопки постоянной ширины в ListView по 90 = 270
+            designatorPerechenColumn.Width = 120 * coef;
+            namePerechenColumn.Width = 410 * coef;
+            quantityPerechenColumn.Width = 70 * coef;
+            notePerechenColumn.Width = 120 * coef;
+
+
+            formatSpecColumn.Width = 30 * coef;
+            zonaSpecColumn.Width = 30 * coef;
+            positionSpecColumn.Width = 30 * coef;
+            oboznachSpecColumn.Width = 280 * coef;
+            nameSpecColumn.Width = 280 * coef;
+            quantitySpecColumn.Width = 30 * coef;
+            noteSpecColumn.Width = 40 * coef;
+        }
+
+        /// <summary> Правка текущей строки перечня </summary>
+        private void PerechenEdit_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+
+            // Создаём список элементов перечня, хранящийся в оперативной памяти для ускорения работы программы:
+            int perLength = project.GetPerechenLength(perTempSave.GetCurrent());
+            List<PerechenItem> tempPerList = new List<PerechenItem>(perLength);
+
+            for (int i = 1; i <= perLength; i++)
+            {
+                tempPerList.Add(project.GetPerechenItem(i, perTempSave.GetCurrent()));
+            }
+
+            int strNum = id.getStrNum((b.CommandParameter as PerechenItem).id);
+
+
+            EditPerechenItemWindow editWindow = new EditPerechenItemWindow(projectPath, strNum, perTempSave.GetCurrent(), perTempSave.GetCurrent() + 1);
+            if (editWindow.ShowDialog() == true)
+            {
+                project.DeletePerechenTempData(perTempSave.SetNext()); // Увеличиваем номер текущего сохранения и одновременно удаляем все последующие сохранения
+
+                for (int i = 1; i <= perLength; i++)
+                {
+                    if (i != strNum)
+                    {
+                        tempPerList[i - 1].id = id.makeID(i, perTempSave.GetCurrent());
+                        project.AddPerechenItem(tempPerList[i - 1]);
+                    }
+
+                }
+
+                tempPerList[strNum - 1] = project.GetPerechenItem(strNum, perTempSave.GetCurrent());
+                project.AddPerechenItem(tempPerList[strNum - 1]);
+
+                DisplayPerValues(tempPerList);
+            }
+
 
         }
 
+        /// <summary> Добавление к перечню пустой строки сверху </summary>
+        private void PerechenAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum = id.getStrNum((b.CommandParameter as PerechenItem).id);
+            int length = project.GetPerechenLength(perTempSave.GetCurrent());
+            List<PerechenItem> perList = new List<PerechenItem>();
+
+            int prevTempSave = perTempSave.GetCurrent();
+            project.DeletePerechenTempData(perTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            int currentTempSave = perTempSave.SetNext(); // Увеличиваем номер текущего сохранения
+
+            for (int i = 1; i <= length + 1; i++)
+            {
+                PerechenItem perItem = new PerechenItem();
+
+                if (i < strNum)
+                {
+                    perItem = project.GetPerechenItem(i, prevTempSave);
+                    perItem.id = id.makeID(i, currentTempSave);
+                    perList.Add(perItem);
+                }
+                else if (i == strNum)
+                {
+                    perItem.id = id.makeID(i, currentTempSave);
+                    perList.Add(perItem);
+                }
+                else if (i > strNum)
+                {
+                    perItem = project.GetPerechenItem(i - 1, prevTempSave);
+                    perItem.id = id.makeID(i, currentTempSave);
+                    perList.Add(perItem);
+                }
+
+            }
+
+            for (int i = 0; i < perList.Count; i++) project.AddPerechenItem(perList[i]);
+
+            DisplayPerValues(perList);
+        }
+
+        /// <summary> Удаление из перечня текущей строки </summary>
+        private void PerechenDelete_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum = id.getStrNum((b.CommandParameter as PerechenItem).id);
+            int length = project.GetPerechenLength(perTempSave.GetCurrent());
+            List<PerechenItem> perList = new List<PerechenItem>();
+
+            int prevTempSave = perTempSave.GetCurrent();
+            project.DeletePerechenTempData(perTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            perTempSave.SetNext(); // Увеличиваем номер текущего сохранения
+            int currentTempSave = perTempSave.GetCurrent();
+
+            for (int i = 1; i <= length; i++)
+            {
+                PerechenItem perItem = new PerechenItem();
+
+                if (i < strNum)
+                {
+                    perItem = project.GetPerechenItem(i, prevTempSave);
+                    perItem.id = id.makeID(i, currentTempSave);
+                    perList.Add(perItem);
+                }
+                else if (i > strNum)
+                {
+                    perItem = project.GetPerechenItem(i, prevTempSave);
+                    perItem.id = id.makeID(i - 1, currentTempSave);
+                    perList.Add(perItem);
+                }
+
+            }
+
+            for (int i = 0; i < perList.Count; i++) project.AddPerechenItem(perList[i]);
+
+            DisplayPerValues(perList);
+        }
+
+        /// <summary> Правка текущей строки спецификации </summary>
+        private void SpecEdit_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+
+            // Создаём список элементов перечня, хранящийся в оперативной памяти для ускорения работы программы:
+            int length = project.GetSpecLength(specTempSave.GetCurrent());
+            List<SpecificationItem> tempList = new List<SpecificationItem>(length);
+
+            for (int i = 1; i <= length; i++)
+            {
+                tempList.Add(project.GetSpecItem(i, specTempSave.GetCurrent()));
+            }
+
+            int strNum = id.getStrNum((b.CommandParameter as SpecificationItem).id);
+            int tempNum = specTempSave.GetCurrent();
+
+            EditSpecItemWindow editWindow = new EditSpecItemWindow(projectPath, strNum, tempNum, specTempSave.GetCurrent() + 1);
+            if (editWindow.ShowDialog() == true)
+            {
+                project.DeleteSpecTempData(specTempSave.SetNext()); // Увеличиваем номер текущего сохранения и одновременно удаляем все последующие сохранения               
+
+                for (int i = 1; i <= length; i++)
+                {
+                    if (i != strNum)
+                    {
+                        tempList[i - 1].id = id.makeID(i, specTempSave.GetCurrent());
+                        project.AddSpecItem(tempList[i - 1]);
+                    }
+
+                }
+
+                tempList[strNum - 1] = project.GetSpecItem(strNum, specTempSave.GetCurrent());
+
+                DisplaySpecValues(tempList);
+            }
+        }
+
+        /// <summary>
+        /// Возвращает номер строки элемента, следующего за последним элементом в разделе спецификации
+        /// Используется при добавлении строки спецификации снизу
+        /// </summary>
+        /// <param name="section">Раздел спецификации</param>
+        private int GetSpecNextNumInSection(Global.SpSections section)
+        {
+            int strNum = 1;
+            
+            List<SpecificationItem> sData = project.GetSpecificationList(specTempSave.GetCurrent());
+            for (int i = (int)Global.SpSections.Documentation; i <= (int)section; i++)
+                strNum += (sData.Where(x => x.spSection == i)).Count();
+           
+            return strNum;
+        }
+
+        /// <summary> Добавление к спецификации пустой строки сверху </summary>
+        private void SpecAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum;
+
+            int specSection = 0;
+
+            Global.SpSections section;
+           
+            if (b.Tag as string == "Документация")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Documentation);
+                specSection = (int)Global.SpSections.Documentation;
+            }
+            else
+            if (b.Tag as string == "Комплексы")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Compleksi);
+                specSection = (int)Global.SpSections.Compleksi;
+            }
+            else
+            if (b.Tag as string == "Сборочные единицы")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.SborEd);
+                specSection = (int)Global.SpSections.SborEd;
+            }
+            else
+            if (b.Tag as string == "Детали")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Details);
+                specSection = (int)Global.SpSections.Details;
+            }
+            else
+            if (b.Tag as string == "Стандартные изделия")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Standard);
+                specSection = (int)Global.SpSections.Standard;
+            }
+            else
+            if (b.Tag as string == "Прочие изделия")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Other);
+                specSection = (int)Global.SpSections.Other;
+            }
+            else
+            if (b.Tag as string == "Материалы")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Materials);
+                specSection = (int)Global.SpSections.Materials;
+            }
+            else
+            if (b.Tag as string == "Комплекты")
+            {
+                //Определяем номер добавляемой строки
+                strNum = GetSpecNextNumInSection(Global.SpSections.Compleсts);
+                specSection = (int)Global.SpSections.Compleсts;
+            }
+            else
+            {
+                strNum = id.getStrNum((b.CommandParameter as SpecificationItem).id);
+                specSection = (b.CommandParameter as SpecificationItem).spSection;
+            }
+
+            int length = project.GetSpecLength(specTempSave.GetCurrent());
+            List<SpecificationItem> specList = new List<SpecificationItem>();
+
+            int prevTempSave = specTempSave.GetCurrent();
+            project.DeleteSpecTempData(specTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            int currentTempSave = specTempSave.SetNext(); // Увеличиваем номер текущего сохранения 
+
+            for (int i = 1; i <= length + 1; i++)
+            {
+                SpecificationItem specItem = new SpecificationItem();
+
+                if (i < strNum)
+                {
+                    specItem = project.GetSpecItem(i, prevTempSave);
+                    specItem.id = id.makeID(i, currentTempSave);
+                }
+                else if (i == strNum)
+                {
+                    specItem = new SpecificationItem();                    
+                    specItem.id = id.makeID(i, currentTempSave);
+                    specItem.spSection = specSection;
+                    specItem.zona = String.Empty;
+                    specItem.position = String.Empty;
+                    specItem.oboznachenie = String.Empty;
+                    specItem.name = String.Empty;
+                    specItem.quantity = String.Empty;
+                    specItem.note = String.Empty;
+                }
+                else if (i > strNum)
+                {
+                    specItem = project.GetSpecItem(i - 1, prevTempSave);
+                    specItem.id = id.makeID(i, currentTempSave);
+                }
+                specList.Add(specItem);
+            }
+
+            for (int i = 0; i < specList.Count; i++) project.AddSpecItem(specList[i]);
+
+            DisplaySpecValues(specList);
+        }
         
+        /// <summary> Удаление текущей строки спецификации </summary>
+        private void SpecDelete_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum = id.getStrNum((b.CommandParameter as SpecificationItem).id);
+            int length = project.GetSpecLength(specTempSave.GetCurrent());
+            List<SpecificationItem> specList = new List<SpecificationItem>();
+
+            int prevTempSave = specTempSave.GetCurrent();
+            project.DeleteSpecTempData(specTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            int currentTempSave = specTempSave.SetNext(); // Увеличиваем номер текущего сохранения
+
+            for (int i = 1; i <= length; i++)
+            {
+                SpecificationItem specItem = new SpecificationItem();
+
+                if (i < strNum)
+                {
+                    specItem = project.GetSpecItem(i, prevTempSave);
+                    specItem.id = id.makeID(i, currentTempSave);
+                }
+                else if (i > strNum)
+                {
+                    specItem = project.GetSpecItem(i, prevTempSave);
+                    specItem.id = id.makeID(i - 1, currentTempSave);
+                }
+                if (i != strNum) specList.Add(specItem);
+
+            }
+
+            for (int i = 0; i < specList.Count; i++) project.AddSpecItem(specList[i]);
+
+            DisplaySpecValues(specList);
+        }
+
+        /// <summary> Сохранение проекта </summary>
+        private void SaveProject_Click(object sender, RoutedEventArgs e)
+        {
+            if (saveProjectMenuItem.IsEnabled == true)
+            {
+                project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent());
+
+                perTempSave.ProjectSaved();
+                specTempSave.ProjectSaved();
+                vedomostTempSave.ProjectSaved();
+            }
+        }
+
+        /// <summary> Отмена действия </summary>
+        private void UndoButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (undoMenuItem.IsEnabled == true)
+            {
+                if (perechenListView.Visibility == Visibility.Visible) perTempSave.SetPrevIfExist();
+                if (specificationTabControl.Visibility == Visibility.Visible) specTempSave.SetPrevIfExist();
+
+                DisplayAllValues();
+            }
+        }
+
+        /// <summary> Возврат действия </summary>
+        private void RedoButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (redoMenuItem.IsEnabled == true)
+            {
+                if (perechenListView.Visibility == Visibility.Visible) perTempSave.SetNextIfExist();
+                if (specificationTabControl.Visibility == Visibility.Visible) specTempSave.SetNextIfExist();
+
+                DisplayAllValues();
+            }
+
+        }
+
+        /// <summary> Выход из программы </summary>
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
     }
 }

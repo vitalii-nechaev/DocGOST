@@ -22,19 +22,23 @@ using SQLite;
 
 namespace DocGOST.Data
 {
-    public class PerechenItem
+    class VedomostItem
     {
         [PrimaryKey]
-        public int id { get; set; } // Порядковый номер (номер строки с нулевого + номер сохранения с 20-го бита)
-        public string designator { get; set; } // Поз. обозначение
+        public int id { get; set; } // Порядковый номер (номер строки с нулевого + номер сохранения с 20-го бита)  
+        public string designator { get; set; } // Позиционное обозначение
         public string name { get; set; } // Наименование
-        public string quantity { get; set; } // Кол.
-        public string note { get; set; } // Примечание
+        public string kod { get; set; } // Код продукции
         public string docum { get; set; } // Документ на поставку
-        public string type { get; set; } // Тип компонента
+        public string supplier { get; set; } // Постав
+        public string belongs { get; set; } // Куда входит        
+        public string quantityIzdelie { get; set; } // Количество на изделие
+        public string quantityComplects { get; set; } // Количество в комплекты
+        public string quantityTotal { get; set; } // Количество, всего
+        public string note { get; set; } //Примечание
         public string group { get; set; } // Название группы компонента в ед.ч.
-        public string groupPlural { get; set; } //Название группы компонента во мн.ч.
+        public string groupPlural { get; set; } //Название группы компонента во мн.ч. 
         //Оформление текста
-        public bool isNameUnderlinded { get; set; } //Подчёркивание наименования
+        public bool isNameUnderlined { get; set; } //Подчёркивание наименования
     }
 }

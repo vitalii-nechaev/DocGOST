@@ -18,18 +18,15 @@
  * 
  */
 
-namespace DocGOST
+using SQLite;
+
+namespace DocGOST.Data
 {
-    class DesignatorDescriptions
+    class DesignatorDescriptionItem
     {
-        public DesignatorDescriptions(string Designator, string Description, string DescriptionPlural)
-        {
-            this.Designator = Designator;
-            this.Description = Description;
-            this.DescriptionPlural = DescriptionPlural;
-        }
-        public string Designator { get; set; }
-        public string Description { get; set; }
-        public string DescriptionPlural { get; set; }
+        [PrimaryKey]
+        public string Designator { get; set; } // Поз. обозначение        
+        public string Group { get; set; } // Название группы компонента в ед.ч.
+        public string GroupPlural { get; set; } //Название группы компонента во мн. ч.
     }
 }

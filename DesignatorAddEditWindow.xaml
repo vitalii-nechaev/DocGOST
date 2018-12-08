@@ -1,0 +1,31 @@
+﻿<Window x:Class="DocGOST.DesignatorAddEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DocGOST"
+        mc:Ignorable="d"
+        Title="DesignatorAddEditWindow" Height="300" Width="300" MinWidth="300" MinHeight="210">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>            
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="130"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Row="0" Grid.Column="0" Content="Поз. обозначение " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <TextBox x:Name="designatorTextBox" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+        <Label Grid.Row="1" Grid.Column="0" Content="Группа в ед. числе " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <TextBox x:Name="groupTextBox" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Группа во мн. числе " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <TextBox x:Name="groupPluralTextBox" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+        <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
+            <Button IsDefault="True" Click="Accept_Click" MinWidth="80" Margin="0,0,20,0">Сохранить</Button>
+            <Button IsCancel="True" Margin="20,0,0,0" MinWidth="80">Отмена</Button>
+        </WrapPanel>
+    </Grid>
+</Window>

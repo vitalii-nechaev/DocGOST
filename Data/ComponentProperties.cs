@@ -18,18 +18,11 @@
  * 
  */
 
-namespace DocGOST
+namespace DocGOST.Data
 {
-    class DesignatorDescriptions
+    class ComponentProperties
     {
-        public DesignatorDescriptions(string Designator, string Description, string DescriptionPlural)
-        {
-            this.Designator = Designator;
-            this.Description = Description;
-            this.DescriptionPlural = DescriptionPlural;
-        }
-        public string Designator { get; set; }
-        public string Description { get; set; }
-        public string DescriptionPlural { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
     }
 }

@@ -1,19 +1,27 @@
-﻿using System;
+﻿/*
+ *
+ * This file is part of the DocGOST project.    
+ * Copyright (C) 2018 Vitalii Nechaev.
+ * 
+ * This program is free software; you can redistribute it and/or modify it 
+ * under the terms of the GNU Affero General Public License version 3 as 
+ * published by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Data.SQLite;
 using System.IO;
-using Microsoft.Win32;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using DocGOST.Data;
@@ -28,10 +36,18 @@ namespace DocGOST
         const int perech_first_page_rows_count = 23;
         const int perech_subseq_page_rows_count = 29;
 
+        const int spec_first_page_rows_count = 23;
+        const int spec_subseq_page_rows_count = 29;
+
         Font normal, big, veryBig;
-        Database project;
+        ProjectDB project;
 
-
+        private enum DocType
+        {
+            Specification = 1, // Спецификация
+            Perechen, // Перечень элементов
+            Vedomost // Ведомость покупных изделий
+        }
 
         public PdfOperations(string projectPath)
         {
@@ -40,48 +56,167 @@ namespace DocGOST
             big = new Font(fontGostA, 18f, Font.ITALIC, BaseColor.BLACK);
             veryBig = new Font(fontGostA, 22f, Font.ITALIC, BaseColor.BLACK);
 
-            project = new Data.Database(projectPath);
+            project = new ProjectDB(projectPath);
         }
 
-        public void CreatePerechen(string pdfPath, int startPage, bool addListRegistr)
+        public void CreateSpecification(string pdfPath, int startPage, bool addListRegistr, int tempNumber)
         {
-            var document = new Document(PageSize.A4);
-            var writer = PdfWriter.GetInstance(document, new FileStream(pdfPath, FileMode.Create));
+            List<SpecificationItem> specPrintList = new List<SpecificationItem>();
+            int numberOfStrings = project.GetSpecLength(tempNumber);
+            int numberOfPrintStrings = 0;
+            int prevSpSection = 0;
 
-            document.Open();
+            //Формируем данные спецификации для печати, добавляя названия разделов.
+            for (int i = 0; i < numberOfStrings; i++)
+            {
+                SpecificationItem sItem = new SpecificationItem();
+                sItem = project.GetSpecItem(i + 1, tempNumber);
 
-           DrawCommonStampA4(document, writer);
+                if (sItem.spSection != prevSpSection)
+                {
+                    //Добавляем пустую строку
+                    SpecificationItem empty = new SpecificationItem();
+                    empty.name = String.Empty;
+                    specPrintList.Add(empty);
 
-            DrawFirstPageStampA4(document, writer, startPage);
+                    //Добавляем название раздела
+                    SpecificationItem header = new SpecificationItem();
+                    if (sItem.spSection == ((int)Global.SpSections.Documentation)) header.name = "Документация";
+                    if (sItem.spSection == ((int)Global.SpSections.Compleksi)) header.name = "Комплексы";
+                    if (sItem.spSection == ((int)Global.SpSections.SborEd)) header.name = "Сборочные единицы";
+                    if (sItem.spSection == ((int)Global.SpSections.Details)) header.name = "Детали";
+                    if (sItem.spSection == ((int)Global.SpSections.Standard)) header.name = "Стандартные изделия";
+                    if (sItem.spSection == ((int)Global.SpSections.Other)) header.name = "Прочие изделия";
+                    if (sItem.spSection == ((int)Global.SpSections.Materials)) header.name = "Материалы";
+                    if (sItem.spSection == ((int)Global.SpSections.Compleсts)) header.name = "Комплекты";
+                    header.group = "Header";
 
-            DrawPerechenTable(document, writer, 0);
+                    specPrintList.Add(header);
 
-            int numberOfValidStrings = project.GetPerechenLength();
-            int totalPageCount = 1 + (numberOfValidStrings - perech_first_page_rows_count) / perech_subseq_page_rows_count;
+                    //Добавляем пустую строку
+                    empty = new SpecificationItem();
+                    empty.name = String.Empty;
+                    specPrintList.Add(empty);
+                    numberOfPrintStrings += 3;
+                }
 
-            if (numberOfValidStrings > perech_first_page_rows_count)
-                for (int i = 0; i < totalPageCount; i++)
+                specPrintList.Add(sItem);
+                numberOfPrintStrings++;
+                prevSpSection = sItem.spSection;
+            }
+
+
+            bool isFileLocked = false;
+            Document document = null;
+            PdfWriter writer = null;
+            try
+            {
+                document = new Document(PageSize.A4);
+                writer = PdfWriter.GetInstance(document, new FileStream(pdfPath, FileMode.Create));
+            }
+            catch
+            {
+                MessageBox.Show("Не удаётся получить доступ к файлу " + pdfPath + ". Скорее всего, файл открыт в другой программе.", "Ошибка", MessageBoxButton.OK);
+                isFileLocked = true;
+            }
+
+            if (isFileLocked == false)
+            {
+                document.Open();
+
+                DrawCommonStampA4(document, writer, DocType.Specification);
+
+                //Вычислим общее количество страниц без учёта листа регистрации
+                int totalPageCount = 2 + (numberOfPrintStrings - spec_first_page_rows_count) / spec_subseq_page_rows_count;
+
+                DrawFirstPageStampA4(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Specification);
+
+                DrawSpecificationTable(document, writer, 0, specPrintList);
+                                
+
+                if (numberOfPrintStrings > spec_first_page_rows_count)
+                    for (int i = 1; i < totalPageCount; i++)
+                    {
+                        document.NewPage();
+
+                        DrawCommonStampA4(document, writer, DocType.Specification);
+                        DrawSubsequentStampA4(document, writer, i + startPage, DocType.Specification);
+                        DrawSpecificationTable(document, writer, i, specPrintList);
+
+                    }
+                if (addListRegistr)
                 {
                     document.NewPage();
 
-                    DrawCommonStampA4(document, writer);
-                    DrawSubsequentStampA4(document, writer, i + 1 + startPage);
-                    DrawPerechenTable(document, writer, 1 + i);
-
+                    DrawCommonStampA4(document, writer, DocType.Specification);
+                    DrawSubsequentStampA4(document, writer, totalPageCount + startPage, DocType.Specification);
+                    DrawListRegistrTable(document, writer);
                 }
-            if (addListRegistr)
-            {
-                document.NewPage();
-
-                DrawCommonStampA4(document, writer);
-                DrawSubsequentStampA4(document, writer, totalPageCount + 1 + startPage);
-                DrawListRegistrTable(document, writer);
+                document.Close();
+                writer.Close();
             }
-            document.Close();
-            writer.Close();
+
         }
 
-        private void DrawCommonStampA4(iTextSharp.text.Document doc, PdfWriter wr)
+        public void CreatePerechen(string pdfPath, int startPage, bool addListRegistr, int tempNumber)
+        {
+            bool isFileLocked = false;
+
+            Document document = null;
+            PdfWriter writer = null;
+
+            try
+            {
+                document = new Document(PageSize.A4);
+                writer = PdfWriter.GetInstance(document, new FileStream(pdfPath, FileMode.Create));
+            }
+            catch
+            {
+                MessageBox.Show("Не удаётся получить доступ к файлу " + pdfPath + ". Скорее всего, файл открыт в другой программе.", "Ошибка", MessageBoxButton.OK);
+                isFileLocked = true;
+            }
+
+
+            if (isFileLocked == false)
+            {
+                document.Open();
+
+                DrawCommonStampA4(document, writer, DocType.Perechen);
+
+                int numberOfValidStrings = project.GetPerechenLength(tempNumber);
+
+                //Вычисляем общее количество листов без учёта листа регистрации
+                int totalPageCount = 2 + (numberOfValidStrings - perech_first_page_rows_count) / perech_subseq_page_rows_count;
+
+                DrawFirstPageStampA4(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Perechen);
+
+                DrawPerechenTable(document, writer, 0, tempNumber);
+                
+                if (numberOfValidStrings > perech_first_page_rows_count)
+                    for (int i = 1; i < totalPageCount; i++)
+                    {
+                        document.NewPage();
+
+                        DrawCommonStampA4(document, writer, DocType.Perechen);
+                        DrawSubsequentStampA4(document, writer, i + startPage, DocType.Perechen);
+                        DrawPerechenTable(document, writer, i, tempNumber);
+
+                    }
+                if (addListRegistr)
+                {
+                    document.NewPage();
+
+                    DrawCommonStampA4(document, writer, DocType.Perechen);
+                    DrawSubsequentStampA4(document, writer, totalPageCount + startPage, DocType.Perechen);
+                    DrawListRegistrTable(document, writer);
+                }
+                document.Close();
+                writer.Close();
+            }
+
+        }
+
+        private void DrawCommonStampA4(Document doc, PdfWriter wr, DocType docType)
         {
 
             PdfContentByte cb = wr.DirectContent;
@@ -115,7 +250,9 @@ namespace DocGOST
             currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
             currentCell.FixedHeight = 25 * mm_A4;
             table19_23.AddCell(currentCell);
-            string gr19Text = project.GetOsnNadpisItem("19").perechenValue;
+            string gr19Text = String.Empty;
+            if (docType == DocType.Specification) gr19Text = project.GetOsnNadpisItem("19").specificationValue;
+            if (docType == DocType.Perechen) gr19Text = project.GetOsnNadpisItem("19").perechenValue;
             currentCell.Phrase = new Phrase(gr19Text, normal);
             currentCell.PaddingLeft = 2;
             table19_23.AddCell(currentCell);
@@ -134,7 +271,9 @@ namespace DocGOST
             currentCell.PaddingLeft = 0;
             currentCell.FixedHeight = 25 * mm_A4;
             table19_23.AddCell(currentCell);
-            string gr21Text = project.GetOsnNadpisItem("21").perechenValue;
+            string gr21Text = String.Empty;
+            if (docType == DocType.Specification) gr21Text = project.GetOsnNadpisItem("21").specificationValue;
+            if (docType == DocType.Perechen) gr21Text = project.GetOsnNadpisItem("21").perechenValue;
             currentCell.Phrase = new Phrase(gr21Text, normal);
             currentCell.PaddingLeft = 2;
             table19_23.AddCell(currentCell);
@@ -144,7 +283,9 @@ namespace DocGOST
             currentCell.PaddingLeft = 0;
             currentCell.FixedHeight = 25 * mm_A4;
             table19_23.AddCell(currentCell);
-            string gr22Text = project.GetOsnNadpisItem("22").perechenValue;
+            string gr22Text = String.Empty;
+            if (docType == DocType.Specification) gr22Text = project.GetOsnNadpisItem("22").specificationValue;
+            if (docType == DocType.Perechen) gr22Text = project.GetOsnNadpisItem("22").perechenValue;
             currentCell.Phrase = new Phrase(gr22Text, normal);
             currentCell.PaddingLeft = 2;
             table19_23.AddCell(currentCell);
@@ -189,7 +330,7 @@ namespace DocGOST
             #endregion
         }
 
-        private void DrawFirstPageStampA4(iTextSharp.text.Document doc, PdfWriter wr, int pageNumber)
+        private void DrawFirstPageStampA4(Document doc, PdfWriter wr, int pageNumber, int pagesTotal, DocType docType)
         {
 
 
@@ -218,7 +359,9 @@ namespace DocGOST
             currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
             currentCell.FixedHeight = 60 * mm_A4;
             table24_25.AddCell(currentCell);
-            string gr24Text = project.GetOsnNadpisItem("24").perechenValue;
+            string gr24Text = String.Empty;
+            if (docType == DocType.Specification) gr24Text = project.GetOsnNadpisItem("24").specificationValue;
+            if (docType == DocType.Perechen) gr24Text = project.GetOsnNadpisItem("24").perechenValue;
             currentCell.Phrase = new Phrase(gr24Text, normal);
             currentCell.PaddingLeft = 2;
             table24_25.AddCell(currentCell);
@@ -228,7 +371,9 @@ namespace DocGOST
             currentCell.PaddingLeft = 0;
             currentCell.FixedHeight = 60 * mm_A4;
             table24_25.AddCell(currentCell);
-            string gr25Text = project.GetOsnNadpisItem("25").perechenValue;
+            string gr25Text = String.Empty;
+            if (docType == DocType.Specification) gr25Text = project.GetOsnNadpisItem("25").specificationValue;
+            if (docType == DocType.Perechen) gr25Text = project.GetOsnNadpisItem("25").perechenValue;
             currentCell.Phrase = new Phrase(gr25Text, normal);
             currentCell.PaddingLeft = 2;
             table24_25.AddCell(currentCell);
@@ -244,13 +389,16 @@ namespace DocGOST
             int kolvoStrGg1 = 2;
             int naimenovaieMaxLength = 25;
             string naimenovanieStr1 = "", naimenovanieStr2 = "";
-            string gr1aText = project.GetOsnNadpisItem("1a").perechenValue;
+            string gr1aText = String.Empty;
+            if (docType == DocType.Specification) gr1aText = project.GetOsnNadpisItem("1a").specificationValue;
+            if (docType == DocType.Perechen) gr1aText = project.GetOsnNadpisItem("1a").perechenValue;
+
             if (gr1aText.Length > naimenovaieMaxLength)
             {
                 kolvoStrGg1 = 3;
 
 
-                string[] naimenovanieStrings = gr1aText.Split(' '); 
+                string[] naimenovanieStrings = gr1aText.Split(' ');
                 foreach (string currentString in naimenovanieStrings)
                 {
                     if (naimenovanieStr1.Length + currentString.Length + 1 < naimenovaieMaxLength) naimenovanieStr1 += currentString + " ";
@@ -272,6 +420,7 @@ namespace DocGOST
                 table1.AddCell(currentCell);
                 table1.WriteSelectedRows(0, 1, 85 * mm_A4, 30 * mm_A4, cb);
                 string gr1bText = project.GetOsnNadpisItem("1b").perechenValue;
+                if (docType == DocType.Specification) gr1bText = project.GetOsnNadpisItem("1b").specificationValue;
                 currentCell.Phrase = new Phrase(gr1bText, normal);
                 currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 currentCell.BorderWidth = 1;
@@ -298,6 +447,7 @@ namespace DocGOST
                 table1.AddCell(currentCell);
                 table1.WriteSelectedRows(1, 2, 85 * mm_A4, 20 * mm_A4, cb);
                 string gr1bText = project.GetOsnNadpisItem("1b").perechenValue;
+                if (docType == DocType.Specification) gr1bText = project.GetOsnNadpisItem("1b").specificationValue;
                 currentCell.Phrase = new Phrase(gr1bText, normal);
                 currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 currentCell.EnableBorderSide(Rectangle.BOTTOM_BORDER);
@@ -315,7 +465,10 @@ namespace DocGOST
 
 
             // Заполнение графы 2:
-            string gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            string gr2Text = String.Empty;
+            if (docType == DocType.Specification) gr2Text = project.GetOsnNadpisItem("2").specificationValue;
+            if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+
             currentCell = new PdfPCell(new Phrase(gr2Text, veryBig));
             currentCell.BorderWidth = 1;
             currentCell.HasFixedHeight();
@@ -356,7 +509,7 @@ namespace DocGOST
             table4_8.AddCell(currentCell);
             currentCell.Phrase = new Phrase(pageNumber.ToString(), normal);
             table4_8.AddCell(currentCell);
-            string gr8Text = project.GetOsnNadpisItem("8").perechenValue;
+            string gr8Text = gr8Text = pagesTotal.ToString();            
             currentCell.Phrase = new Phrase(gr8Text, normal);
             table4_8.AddCell(currentCell);
             table4_8.WriteSelectedRows(0, 2, 155 * mm_A4, 30 * mm_A4, cb);
@@ -370,7 +523,9 @@ namespace DocGOST
             tbldWidths[1] = 5;
             tbldWidths[2] = 5;
             table4.SetWidths(tbldWidths);
-            string gr4aText = project.GetOsnNadpisItem("4a").perechenValue;
+            string gr4aText = String.Empty;
+            if (docType == DocType.Specification) gr4aText = project.GetOsnNadpisItem("4a").specificationValue;
+            if (docType == DocType.Perechen) gr4aText = project.GetOsnNadpisItem("4a").perechenValue;
             currentCell = new PdfPCell(new Phrase(gr4aText, normal));
             currentCell.BorderWidth = 0.5f;
             currentCell.HasFixedHeight();
@@ -379,10 +534,14 @@ namespace DocGOST
             currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
             currentCell.FixedHeight = 5 * mm_A4;
             table4.AddCell(currentCell);
-            string gr4bText = project.GetOsnNadpisItem("4b").perechenValue;
+            string gr4bText = String.Empty;
+            if (docType == DocType.Specification) gr4bText = project.GetOsnNadpisItem("4b").specificationValue;
+            if (docType == DocType.Perechen) gr4bText = project.GetOsnNadpisItem("4b").perechenValue;
             currentCell.Phrase = new Phrase(gr4bText, normal);
             table4.AddCell(currentCell);
-            string gr4cText = project.GetOsnNadpisItem("4c").perechenValue;
+            string gr4cText = String.Empty;
+            if (docType == DocType.Specification) gr4cText = project.GetOsnNadpisItem("4c").specificationValue;
+            if (docType == DocType.Perechen) gr4cText = project.GetOsnNadpisItem("4c").perechenValue;
             currentCell.Phrase = new Phrase(gr4cText, normal);
             table4.AddCell(currentCell);
             table4.WriteSelectedRows(0, 1, 155 * mm_A4, 25 * mm_A4, cb);
@@ -453,13 +612,19 @@ namespace DocGOST
             table14_18.AddCell(currentCell);
             table14_18.AddCell(currentCell);
             table14_18.WriteSelectedRows(0, 1, 20 * mm_A4, 45 * mm_A4, cb);
-            string gr14aText = project.GetOsnNadpisItem("14a").perechenValue;
+            string gr14aText = String.Empty;
+            if (docType == DocType.Specification) gr14aText = project.GetOsnNadpisItem("14a").specificationValue;
+            if (docType == DocType.Perechen) gr14aText = project.GetOsnNadpisItem("14a").perechenValue;
             currentCell.Phrase = new Phrase(gr14aText, normal);
             table14_18.AddCell(currentCell);
-            string gr15aText = project.GetOsnNadpisItem("15a").perechenValue;
+            string gr15aText = String.Empty;
+            if (docType == DocType.Specification) gr15aText = project.GetOsnNadpisItem("15a").specificationValue;
+            if (docType == DocType.Perechen) gr15aText = project.GetOsnNadpisItem("15a").perechenValue;
             currentCell.Phrase = new Phrase(gr15aText, normal);
             table14_18.AddCell(currentCell);
-            string gr16aText = project.GetOsnNadpisItem("16a").perechenValue;
+            string gr16aText = String.Empty;
+            if (docType == DocType.Specification) gr16aText = project.GetOsnNadpisItem("16a").specificationValue;
+            if (docType == DocType.Perechen) gr16aText = project.GetOsnNadpisItem("16a").perechenValue;
             currentCell.Phrase = new Phrase(gr16aText, normal);
             table14_18.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -486,7 +651,9 @@ namespace DocGOST
             currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
             currentCell.FixedHeight = 5 * mm_A4;
             table10_13.AddCell(currentCell);
-            string gr11aText = project.GetOsnNadpisItem("11a").perechenValue;
+            string gr11aText = String.Empty;
+            if (docType == DocType.Specification) gr11aText = project.GetOsnNadpisItem("11a").specificationValue;
+            if (docType == DocType.Perechen) gr11aText = project.GetOsnNadpisItem("11a").perechenValue;
             currentCell.Phrase = new Phrase(gr11aText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -494,16 +661,22 @@ namespace DocGOST
             table10_13.WriteSelectedRows(0, 1, 20 * mm_A4, 30 * mm_A4, cb);
             currentCell.Phrase = new Phrase("Пров.", normal);
             table10_13.AddCell(currentCell);
-            string gr11bText = project.GetOsnNadpisItem("11b").perechenValue;
+            string gr11bText = String.Empty;
+            if (docType == DocType.Specification) gr11bText = project.GetOsnNadpisItem("11b").specificationValue;
+            if (docType == DocType.Perechen) gr11bText = project.GetOsnNadpisItem("11b").perechenValue;
             currentCell.Phrase = new Phrase(gr11bText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
             for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
             table10_13.WriteSelectedRows(1, 2, 20 * mm_A4, 25 * mm_A4, cb);
-            string gr10Text = project.GetOsnNadpisItem("10").perechenValue;
+            string gr10Text = String.Empty;
+            if (docType == DocType.Specification) gr10Text = project.GetOsnNadpisItem("10").specificationValue;
+            if (docType == DocType.Perechen) gr10Text = project.GetOsnNadpisItem("10").perechenValue;
             currentCell.Phrase = new Phrase(gr10Text, normal);
             table10_13.AddCell(currentCell);
-            string gr11cText = project.GetOsnNadpisItem("11c").perechenValue;
+            string gr11cText = String.Empty;
+            if (docType == DocType.Specification) gr11cText = project.GetOsnNadpisItem("11c").specificationValue;
+            if (docType == DocType.Perechen) gr11cText = project.GetOsnNadpisItem("11c").perechenValue;
             currentCell.Phrase = new Phrase(gr11cText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -511,7 +684,9 @@ namespace DocGOST
             table10_13.WriteSelectedRows(2, 3, 20 * mm_A4, 20 * mm_A4, cb);
             currentCell.Phrase = new Phrase("Н. контр.", normal);
             table10_13.AddCell(currentCell);
-            string gr11dText = project.GetOsnNadpisItem("11d").perechenValue;
+            string gr11dText = String.Empty;
+            if (docType == DocType.Specification) gr11dText = project.GetOsnNadpisItem("11d").specificationValue;
+            if (docType == DocType.Perechen) gr11dText = project.GetOsnNadpisItem("11d").perechenValue;
             currentCell.Phrase = new Phrase(gr11dText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -519,7 +694,9 @@ namespace DocGOST
             table10_13.WriteSelectedRows(3, 4, 20 * mm_A4, 15 * mm_A4, cb);
             currentCell.Phrase = new Phrase("Утв.", normal);
             table10_13.AddCell(currentCell);
-            string gr11eText = project.GetOsnNadpisItem("11e").perechenValue;
+            string gr11eText = String.Empty;
+            if (docType == DocType.Specification) gr11eText = project.GetOsnNadpisItem("11e").specificationValue;
+            if (docType == DocType.Perechen) gr11eText = project.GetOsnNadpisItem("11e").perechenValue;
             currentCell.Phrase = new Phrase(gr11eText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -571,7 +748,7 @@ namespace DocGOST
             #endregion
         }
 
-        private void DrawSubsequentStampA4(iTextSharp.text.Document doc, PdfWriter wr, int pageNumber)
+        private void DrawSubsequentStampA4(Document doc, PdfWriter wr, int pageNumber, DocType docType)
         {
             PdfContentByte cb = wr.DirectContent;
 
@@ -586,7 +763,9 @@ namespace DocGOST
 
 
             // Заполнение графы 2:
-            string gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            string gr2Text = String.Empty;
+            if (docType == DocType.Specification) gr2Text = project.GetOsnNadpisItem("2").specificationValue;
+            if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
             PdfPCell currentCell = new PdfPCell(new Phrase(gr2Text, veryBig));
             currentCell.BorderWidth = 1;
             currentCell.HasFixedHeight();
@@ -683,7 +862,7 @@ namespace DocGOST
             #endregion
         }
 
-        private void DrawPerechenTable(iTextSharp.text.Document doc, PdfWriter wr, int pagesCount)
+        private void DrawPerechenTable(Document doc, PdfWriter wr, int pagesCount, int tempNumber)
         {
             float rowsHeight = 8.86f;
 
@@ -693,6 +872,8 @@ namespace DocGOST
             BaseFont fontGostA = BaseFont.CreateFont("GOST_A.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
             Font normal = new Font(fontGostA, 12f, Font.ITALIC, BaseColor.BLACK);
             Font underline = new Font(fontGostA, 12f, Font.UNDERLINE | Font.ITALIC, BaseColor.BLACK);
+
+            //Размеры в соответствии с рис. 5 ГОСТ 2.701-2008
 
             PdfPTable perechTable = new PdfPTable(4);
             perechTable.TotalWidth = 185 * mm_A4;
@@ -723,12 +904,12 @@ namespace DocGOST
             int startIndex = perech_first_page_rows_count * (pagesCount == 0 ? 0 : 1) + perech_subseq_page_rows_count * (pagesCount > 1 ? pagesCount - 1 : 0); //номер первой строки на странице из общего кол-ва строк
             int rowsCount = (pagesCount == 0) ? perech_first_page_rows_count : perech_subseq_page_rows_count;
             //rowsCount = Math.Min(rowsCount, numberOfValidStrings - startIndex);
-            int numberOfValidStrings = project.GetPerechenLength();
-            List<PerechenItem> pData = new List<PerechenItem>();            
+            int numberOfValidStrings = project.GetPerechenLength(tempNumber);
+            List<PerechenItem> pData = new List<PerechenItem>();
 
             for (int i = 1; i <= numberOfValidStrings; i++)
             {
-                pData.Add(project.GetPerechenItem(i));
+                pData.Add(project.GetPerechenItem(i, tempNumber));
             }
 
             for (int j = startIndex; j < startIndex + rowsCount; j++)
@@ -745,11 +926,16 @@ namespace DocGOST
                             currentCell.Phrase = new Phrase("   ", normal);
                             currentCell.Phrase.Add(new Chunk(pData[j].name.Substring(1), underline));
                         }
-                        else currentCell.Phrase = new Phrase(" " + pData[j].name, normal);
+                        else
+                        {
+                            currentCell.Phrase = new Phrase(" ", normal);
+                            currentCell.Phrase.Add(new Phrase(" " + pData[j].name, (pData[j].isNameUnderlinded == true) ? underline : normal));
+                        }
+
 
                     }
                     else if (i == 2) currentCell.Phrase = new Phrase(pData[j].quantity, normal);
-                    else if (i == 3) currentCell.Phrase = new Phrase(pData[j].note, normal);
+                    else if (i == 3) currentCell.Phrase = new Phrase(' ' + pData[j].note, normal);
 
 
                     else currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -784,7 +970,142 @@ namespace DocGOST
             perechTable.WriteSelectedRows(0, 2, 20 * mm_A4, 292 * mm_A4, cb);
         }
 
-        private void DrawListRegistrTable(iTextSharp.text.Document doc, PdfWriter wr)
+        int position = 1;
+
+        private void DrawSpecificationTable(Document doc, PdfWriter wr, int pagesCount, List<SpecificationItem> sData)
+        {
+            float rowsHeight = 8.86f;
+
+            PdfContentByte cb = wr.DirectContent;
+            float mm_A4 = doc.PageSize.Width / 210;
+
+            BaseFont fontGostA = BaseFont.CreateFont("GOST_A.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            Font normal = new Font(fontGostA, 12f, Font.ITALIC, BaseColor.BLACK);
+            Font underline = new Font(fontGostA, 12f, Font.UNDERLINE | Font.ITALIC, BaseColor.BLACK);
+
+            //Размеры в соответствии с Приложением А ГОСТ 2.106-96
+
+            PdfPTable specTable = new PdfPTable(7);
+            specTable.TotalWidth = 185 * mm_A4;
+            specTable.LockedWidth = true;
+            float[] tbldWidths = new float[7];
+            tbldWidths[0] = 6;
+            tbldWidths[1] = 6;
+            tbldWidths[2] = 8;
+            tbldWidths[3] = 70;
+            tbldWidths[4] = 63;
+            tbldWidths[5] = 10;
+            tbldWidths[6] = 22;
+            specTable.SetWidths(tbldWidths);
+
+            // Заполнение заголовков:
+            PdfPCell currentCell = new PdfPCell(new Phrase("Формат", normal));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 6 * mm_A4;
+            currentCell.Rotation = 90;
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Зона", normal);
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Поз.", normal);
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.FixedHeight = 8 * mm_A4;
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Обозначение", normal);
+            currentCell.Rotation = 0;
+            currentCell.FixedHeight = 15 * mm_A4;
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Наименование", normal);
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Кол.", normal);
+            currentCell.Rotation = 90;
+            currentCell.FixedHeight = 10 * mm_A4;
+            specTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(" Приме-  чание", normal);
+            currentCell.Rotation = 0;
+            currentCell.FixedHeight = 15 * mm_A4;
+            specTable.AddCell(currentCell);
+
+            // Заполнение граф:                        
+            int startIndex = spec_first_page_rows_count * (pagesCount == 0 ? 0 : 1) + spec_subseq_page_rows_count * (pagesCount > 1 ? pagesCount - 1 : 0); //номер первой строки на странице из общего кол-ва строк
+            int rowsCount = (pagesCount == 0) ? spec_first_page_rows_count : spec_subseq_page_rows_count;
+            //rowsCount = Math.Min(rowsCount, numberOfValidStrings - startIndex);
+
+
+            for (int j = startIndex; j < startIndex + rowsCount; j++)
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if (j >= sData.Count) currentCell.Phrase = new Phrase(String.Empty);
+                    else
+                       if (i == 0) currentCell.Phrase = new Phrase(sData[j].format, normal);
+                    else if (i == 1) currentCell.Phrase = new Phrase(sData[j].zona, normal);
+                    else if (i == 2)
+                    {
+                        if (sData[j].position != null)
+                        {
+                            sData[j].position = sData[j].position.Replace(" ", "");
+                            if (sData[j].position != String.Empty)
+                            {
+                                currentCell.Phrase = new Phrase(position.ToString(), normal);
+                                position++;
+                            }
+                        }
+                                                    
+                    }                        
+                    else if (i == 3) currentCell.Phrase = new Phrase(' ' + sData[j].oboznachenie, normal);
+                    else if (i == 4)
+                    {
+                        if (sData[j].group == "Header")
+                        {
+                            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            currentCell.Phrase = new Phrase(sData[j].name, underline);
+                        }
+                        else
+                        {
+                            currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                            currentCell.Phrase = new Phrase(' ' + sData[j].name, normal);
+                        }
+                    }
+                    else if (i == 5) currentCell.Phrase = new Phrase(sData[j].quantity, normal);
+                    else if (i == 6) currentCell.Phrase = new Phrase(' ' + sData[j].note, normal);
+
+                    else currentCell.Phrase = new Phrase(String.Empty, normal);
+                    currentCell.FixedHeight = rowsHeight * mm_A4;
+
+                    //Для граф "Обозначение" и "Наименование" устанавливаем выравниванеие по левому краю:
+                    if (i == 3) currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    else if (i != 4) currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+
+                    specTable.AddCell(currentCell);
+                }
+            }
+
+            specTable.WriteSelectedRows(0, rowsCount + 1, 20 * mm_A4, 292 * mm_A4, cb);
+
+            //Рисование толстых линий:
+            specTable = new PdfPTable(7);
+            specTable.TotalWidth = 185 * mm_A4;
+            specTable.LockedWidth = true;
+            specTable.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 15 * mm_A4;
+            for (int j = 0; j < 7; j++) specTable.AddCell(currentCell);
+            currentCell.FixedHeight = rowsHeight * rowsCount * mm_A4;
+            for (int j = 0; j < 7; j++) specTable.AddCell(currentCell);
+
+            specTable.WriteSelectedRows(0, 2, 20 * mm_A4, 292 * mm_A4, cb);
+        }
+
+        private void DrawListRegistrTable(Document doc, PdfWriter wr)
         {
             PdfContentByte cb = wr.DirectContent;
             float mm_A4 = doc.PageSize.Width / 210;

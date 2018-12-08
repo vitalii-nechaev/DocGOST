@@ -1,0 +1,39 @@
+﻿<Window x:Class="DocGOST.ImportPcbPrjWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DocGOST"
+        mc:Ignorable="d"
+        Title="Параметры импорта" Height="284.443" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="130"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            Сопоставьте названия свойств компонентов:
+        </Label>               
+        <Label Grid.Row="1" Grid.Column="0" Content="Поз. обозначение " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <ComboBox x:Name="designatorComboBox" Grid.Row="1" Grid.Column="1" Height="20" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5" SelectionChanged="ComboBox_SelectionChanged"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Наименование " HorizontalAlignment="Right" VerticalAlignment="Center" />
+        <ComboBox x:Name="nameComboBox" Grid.Row="2" Grid.Column="1" Height="20" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5" SelectionChanged="ComboBox_SelectionChanged"/>
+        <Label Grid.Row="3" Grid.Column="0" Content="Документ на поставку " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <ComboBox x:Name="documComboBox" Grid.Row="3" Grid.Column="1" Height="20" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>        
+        <Label Grid.Row="4" Grid.Column="0" Content="Примечание " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <ComboBox x:Name="noteComboBox" Grid.Row="4" Grid.Column="1" Height="20" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+
+        <WrapPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
+            <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
+            <Button x:Name="nextButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Accept_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>            
+        </WrapPanel>
+    </Grid>
+</Window>
