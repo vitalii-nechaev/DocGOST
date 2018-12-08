@@ -14,4 +14,4 @@ Boston, MA, 02110-1301 USA.
 This program uses iTextSharp, which source code is available at 
 https://github.com/itext/itextsharp.
 
-For more information about iText, please refer to http://itextpdf.com
+For more information about iText, please refer to http://itextpdf.com.
