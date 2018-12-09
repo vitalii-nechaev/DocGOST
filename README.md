@@ -1,6 +1,7 @@
 # DocGOST
 DocGOST is a program designed to automatically generate pdf GOST-compliant documentation from ECAD projects.
 Examples of program output are demonstrated below.
+![Program outputs](http://www.xn-----6kccalfmhwcdcrbm1aajnghfrqjce3b0z.xn--p1ai/wp-content/uploads/2018/12/СпецификацияПеречень.png)
 
 # Resources
 For more information, check out our [website](http://электроника-и-программирование.рф)!
