@@ -5,7 +5,7 @@ Examples of program output are demonstrated below.
 # Resources
 For more information, check out our [website](http://электроника-и-программирование.рф)!
 # Currently Supported Platforms
--Windows with .Net Framework 4.5.1 of greater.
+Windows with .Net Framework 4.5.1 of greater.
 # Source Download and Compilation
 The source code may be accessed by cloning the Git repository:
 ```
