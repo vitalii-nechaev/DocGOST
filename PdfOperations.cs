@@ -128,8 +128,10 @@ namespace DocGOST
                 DrawCommonStampA4(document, writer, DocType.Specification);
 
                 //Вычислим общее количество страниц без учёта листа регистрации
-                int totalPageCount = 2 + (numberOfPrintStrings - spec_first_page_rows_count) / spec_subseq_page_rows_count;
-
+                int totalPageCount;
+                if (numberOfPrintStrings <= spec_first_page_rows_count) totalPageCount = 1;
+                else totalPageCount = 2 + (numberOfPrintStrings - spec_first_page_rows_count) / spec_subseq_page_rows_count;
+                
                 DrawFirstPageStampA4(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Specification);
 
                 DrawSpecificationTable(document, writer, 0, specPrintList);
@@ -187,7 +189,9 @@ namespace DocGOST
                 int numberOfValidStrings = project.GetPerechenLength(tempNumber);
 
                 //Вычисляем общее количество листов без учёта листа регистрации
-                int totalPageCount = 2 + (numberOfValidStrings - perech_first_page_rows_count) / perech_subseq_page_rows_count;
+                int totalPageCount;
+                if (numberOfValidStrings <= perech_first_page_rows_count) totalPageCount = 1;
+                else totalPageCount = 2 + (numberOfValidStrings - perech_first_page_rows_count) / perech_subseq_page_rows_count;
 
                 DrawFirstPageStampA4(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Perechen);
 
@@ -245,7 +249,9 @@ namespace DocGOST
                 int numberOfValidStrings = project.GetVedomostLength(tempNumber);
 
                 //Вычисляем общее количество листов без учёта листа регистрации
-                int totalPageCount = 2 + (numberOfValidStrings - vedomost_first_page_rows_count) / vedomost_subseq_page_rows_count;
+                int totalPageCount;
+                if (numberOfValidStrings <= vedomost_first_page_rows_count) totalPageCount = 1;
+                else totalPageCount = 2 + (numberOfValidStrings - vedomost_first_page_rows_count) / vedomost_subseq_page_rows_count;
 
                 DrawFirstPageStampA3(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Vedomost);
 
