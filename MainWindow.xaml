@@ -3,9 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="DocGOST" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" >
+        Title="ДокГОСТ версия 0.51" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" >
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
@@ -91,7 +90,7 @@
                                 <DataTemplate>
                                     <Grid>
                                         <TextBlock x:Name="namePerechenTextBlock" Background="Transparent" Text="{Binding name}"/>
-                                        <TextBox BorderBrush="Black" BorderThickness="0,0,0,1" Width="{Binding IsChecked, ElementName=namePerechenTextBlock}" Background="Transparent" Visibility="{Binding isNameUnderlinded, Converter={StaticResource BoolToVisConverter}}"/>
+                                        <TextBox BorderBrush="Black" BorderThickness="0,0,0,1" Width="{Binding Width, ElementName=namePerechenTextBlock}" Background="Transparent" Visibility="{Binding isNameUnderlined, Converter={StaticResource BoolToVisConverter}}"/>
                                     </Grid>                               
                                    
                                 </DataTemplate>
@@ -121,6 +120,66 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Width="40" Click="PerechenDelete_Click"  Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                        <Image Source="Images/Delete.png" Height="22" />
+                                    </Button>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <ListView x:Name="vedomostListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Hidden">
+                <ListView.Resources>
+                    <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+                </ListView.Resources>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>                        
+                        <GridViewColumn x:Name="nameVedomostColumn" Header="Наименование" Width="272">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <TextBlock x:Name="nameVedomostTextBlock" Background="Transparent" Text="{Binding name}"/>
+                                        <TextBox BorderBrush="Black" BorderThickness="0,0,0,1" Width="{Binding Width, ElementName=nameVedomostTextBlock}" Background="Transparent" Visibility="{Binding isNameUnderlined, Converter={StaticResource BoolToVisConverter}}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn x:Name="kodVedomostColumn" Header="Код" DisplayMemberBinding="{Binding kod}" Width="70"/>
+                        <GridViewColumn x:Name="documVedomostColumn" Header="Документ" DisplayMemberBinding="{Binding docum}" Width="180"/>
+                        <GridViewColumn x:Name="supplierVedomostColumn" Header="Поставщик" DisplayMemberBinding="{Binding supplier}" Width="110"/>
+                        <GridViewColumn x:Name="belongsVedomostColumn" Header="Куда входит" DisplayMemberBinding="{Binding belongs}" Width="110"/>
+                        <GridViewColumn x:Name="quantityIzdelieVedomostColumn" Header="Кол-во на изделие" DisplayMemberBinding="{Binding quantityIzdelie}" Width="120"/>
+                        <GridViewColumn x:Name="quantityComplectsVedomostColumn" Header="Кол-во на комплекты" DisplayMemberBinding="{Binding quantityComplects}" Width="120"/>
+                        <GridViewColumn x:Name="quantityRegulVedomostColumn" Header="Кол-во на регулир." DisplayMemberBinding="{Binding quantityRegul}" Width="120"/>
+                        <GridViewColumn x:Name="quantityTotalVedomostColumn" Header="Всего" DisplayMemberBinding="{Binding quantityTotal}" Width="50"/>
+                        <GridViewColumn x:Name="noteVedomostColumn" Header="Примечание" DisplayMemberBinding="{Binding note}" Width="140"/>
+                        <GridViewColumn Header="Редактировать" Width="90">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Width="40" Click="VedomostEdit_Click" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                        <Image Source="Images/edit.png" Height="22" />
+                                    </Button>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Добавить" Width="60">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Width="40" Click="VedomostAdd_Click"  Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                        <Image Source="Images/add.png" Height="22" />
+                                    </Button>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Удалить" Width="60">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Width="40" Click="VedomostDelete_Click"  Height="25" Background="Transparent" CommandParameter="{Binding}">
                                         <Image Source="Images/Delete.png" Height="22" />
                                     </Button>
                                 </DataTemplate>

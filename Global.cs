@@ -18,7 +18,6 @@
  * 
  */
 
-
 namespace DocGOST
 {
     public class Global

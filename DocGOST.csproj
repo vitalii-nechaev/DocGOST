@@ -26,7 +26,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,7 +35,6 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -98,12 +96,16 @@
     <Compile Include="EditSpecItemWindow.xaml.cs">
       <DependentUpon>EditSpecItemWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EditVedomostItemWindow.xaml.cs">
+      <DependentUpon>EditVedomostItemWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Global.cs" />
     <Compile Include="ImportPcbPrjWindow.xaml.cs">
       <DependentUpon>ImportPcbPrjWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="SpecificationOperations.cs" />
     <Compile Include="TempSaves.cs" />
+    <Compile Include="VedomostOperations.cs" />
     <Page Include="DesigDescrWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -117,6 +119,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EditSpecItemWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EditVedomostItemWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

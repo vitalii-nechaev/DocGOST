@@ -20,7 +20,6 @@
 
 using SQLite;
 using System;
-
 namespace DocGOST.Data
 {
     class SpecificationItem

@@ -35,6 +35,6 @@ namespace DocGOST.Data
         public string group { get; set; } // Название группы компонента в ед.ч.
         public string groupPlural { get; set; } //Название группы компонента во мн.ч.
         //Оформление текста
-        public bool isNameUnderlinded { get; set; } //Подчёркивание наименования
+        public bool isNameUnderlined { get; set; } //Подчёркивание наименования
     }
 }

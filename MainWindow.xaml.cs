@@ -53,7 +53,6 @@ namespace DocGOST
         Global id; //Переменная для работы с id данных проекта (т.е. для того, чтобы создавать и расшифровывать id,
                    //т.к. id сгруппирован из номера текущего сохранённого состояния и номера строки записи - подробнее в Data.PerechenItem.cs и Data.SpecificationItem.cs)
 
-
         public MainWindow()
         {
             InitializeComponent();
@@ -124,6 +123,10 @@ namespace DocGOST
                 docItem.Header = "Спецификация";
                 docItem.Selected += treeSelectionChanged;
                 apparatItem.Items.Add(docItem);
+                docItem = new TreeViewItem();
+                docItem.Header = "Ведомость";
+                docItem.Selected += treeSelectionChanged;
+                apparatItem.Items.Add(docItem);
                 projectTreeViewItem.Items.Add(apparatItem);
 
                 projectTreeViewItem.ExpandSubtree();
@@ -154,11 +157,19 @@ namespace DocGOST
             {
                 perechenListView.Visibility = Visibility.Visible;
                 specificationTabControl.Visibility = Visibility.Hidden;
+                vedomostListView.Visibility = Visibility.Hidden;
             }
             else if (header == "Спецификация")
             {
                 perechenListView.Visibility = Visibility.Hidden;
                 specificationTabControl.Visibility = Visibility.Visible;
+                vedomostListView.Visibility = Visibility.Hidden;
+            }
+            else if (header == "Ведомость")
+            {
+                perechenListView.Visibility = Visibility.Hidden;
+                specificationTabControl.Visibility = Visibility.Hidden;
+                vedomostListView.Visibility = Visibility.Visible;
             }
         }
 
@@ -215,6 +226,10 @@ namespace DocGOST
                     docItem.Header = "Спецификация";
                     docItem.Selected += treeSelectionChanged;
                     apparatItem.Items.Add(docItem);
+                    docItem = new TreeViewItem();
+                    docItem.Header = "Ведомость";
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
                     projectTreeViewItem.Items.Add(apparatItem);
 
                     projectTreeViewItem.ExpandSubtree();
@@ -237,6 +252,7 @@ namespace DocGOST
                         specItem.id = id.makeID(i, specTempSave.GetCurrent());
                         project.AddSpecItem(specItem);
                     }
+                    specTempSave.ProjectSaved();
 
                     for (int i = 1; i <= project.GetVedomostLength(0); i++)
                     {
@@ -245,9 +261,8 @@ namespace DocGOST
                         vedomostItem.id = id.makeID(i, specTempSave.GetCurrent());
                         project.AddVedomostItem(vedomostItem);
                     }
-                    specTempSave.ProjectSaved();
-
-                    specTempSave.ProjectSaved();
+                    vedomostTempSave.ProjectSaved();
+                                        
                     DisplayAllValues();
 
                     importMenuItem.IsEnabled = true;
@@ -257,14 +272,13 @@ namespace DocGOST
                     createPdfMenuItem.IsEnabled = true;
                     osnNadpisMenuItem.IsEnabled = true;
                     osnNadpisButton.IsEnabled = true;
-                }
+                }                
             }
         }
 
         /// <summary> Импорт данных из проекта Altium Designer (.PrjPcb) </summary>
         private void ImportPrjPcbfromAD_Click(object sender, RoutedEventArgs e)
         {
-
             OpenFileDialog openDlg = new OpenFileDialog();
             openDlg.Title = "Выбор файла проекта AltiumDesigner";
             openDlg.Multiselect = false;
@@ -463,6 +477,14 @@ namespace DocGOST
                     tempSpecItem.spSection = (int)Global.SpSections.Documentation;
                     specList.Add(tempSpecItem);
 
+                    tempSpecItem = new SpecificationItem();
+                    numberOfValidStrings++;
+                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    tempSpecItem.name = "Ведомость покупных изделий";
+                    tempSpecItem.quantity = String.Empty;
+                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    specList.Add(tempSpecItem);
+
                     numberOfValidStrings++;
                     plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
                     specList.Add(plataSpecItem);
@@ -484,7 +506,7 @@ namespace DocGOST
                         tempPerechen.type = String.Empty;
                         tempPerechen.group = String.Empty;
                         tempPerechen.groupPlural = String.Empty;
-                        tempPerechen.isNameUnderlinded = false;
+                        tempPerechen.isNameUnderlined = false;
                         
                         for (int j = 0; j < (componentsList[i]).Count; j++)
                         {
@@ -526,6 +548,7 @@ namespace DocGOST
                         tempSpecification.isNameUnderlined = false;
 
                         tempVedomost.id = tempPerechen.id;
+                        tempVedomost.designator = tempPerechen.designator;
                         tempVedomost.name = tempPerechen.name;
                         tempVedomost.kod = String.Empty;
                         tempVedomost.docum = tempPerechen.docum;
@@ -535,6 +558,7 @@ namespace DocGOST
                         tempVedomost.quantityComplects = String.Empty;
                         tempVedomost.quantityTotal = "1";
                         tempVedomost.note = String.Empty;
+                        tempVedomost.isNameUnderlined = false;
 
                         string group = string.Empty;
 
@@ -554,6 +578,7 @@ namespace DocGOST
 
                                 tempSpecification.group = group;
                                 tempVedomost.group = group;
+                                tempVedomost.groupPlural = tempPerechen.groupPlural;
                             }
                         }
 
@@ -578,14 +603,15 @@ namespace DocGOST
                     for (int i = 0; i < specOtherListSorted.Count; i++)
                     {
                         perechenListSorted[i].id = id.makeID(i + 1, perTempSave.GetCurrent());
-                        specOtherListSorted[i].id = id.makeID(i + 1 + (numberOfValidStrings - specOtherListSorted.Count), perTempSave.GetCurrent());
+                        specOtherListSorted[i].id = id.makeID(i + 1 + (numberOfValidStrings - specOtherListSorted.Count), specTempSave.GetCurrent());
+                        vedomostListSorted[i].id = id.makeID(i + 1, vedomostTempSave.GetCurrent());
                     }
 
                     saveProjectMenuItem.IsEnabled = true;
                     undoMenuItem.IsEnabled = true;
                     redoMenuItem.IsEnabled = true;
                     #endregion
-                    groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted);
+                    groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
                 }
             }
         }
@@ -626,8 +652,8 @@ namespace DocGOST
         /// <summary> Отображение данных спецификации и перечня пользователю из текущего временного сохранения проекта </summary>
         private void DisplayAllValues()
         {
-            int length = project.GetPerechenLength(perTempSave.GetCurrent());
-            //Вывод несгруппированных строк в окно программы:
+            //Вывод данных перечня в окно программы:
+            int length = project.GetPerechenLength(perTempSave.GetCurrent());            
             List<PerechenItem> resultPer = new List<PerechenItem>(length);
 
             for (int i = 1; i <= length; i++)
@@ -637,8 +663,8 @@ namespace DocGOST
 
             DisplayPerValues(resultPer);
 
+            //Вывод данных спецификации в окно программы:
             length = project.GetSpecLength(specTempSave.GetCurrent());
-            //Вывод несгруппированных строк в окно программы:
             List<SpecificationItem> resultSpec = new List<SpecificationItem>(length);
 
             for (int i = 1; i <= length; i++)
@@ -647,8 +673,17 @@ namespace DocGOST
             }
 
             DisplaySpecValues(resultSpec);
+            
+            //Вывод данных ведомости в окно программы:
+            length = project.GetVedomostLength(vedomostTempSave.GetCurrent());
+            List<VedomostItem> resultVedomost = new List<VedomostItem>(length);
 
+            for (int i = 1; i <= length; i++)
+            {
+                resultVedomost.Add(project.GetVedomostItem(i, vedomostTempSave.GetCurrent()));
+            }
 
+            DisplayVedomostValues(resultVedomost);
         }
 
         /// <summary>
@@ -731,6 +766,16 @@ namespace DocGOST
             }*/
         }
 
+        /// <summary>
+        /// Отображение данных ведомости для пользователя
+        /// </summary>
+        /// <param name="vData"> Список с данными ведомости для отображения</param>
+        private void DisplayVedomostValues(List<VedomostItem> vData)
+        {
+            //Вывод данных в окно программы: 
+            vedomostListView.ItemsSource = vData;            
+        }
+
         /// <summary> Создание PDF-файлов перечня и спецификации </summary>
         private void CreatePdf_Click(object sender, RoutedEventArgs e)
         {
@@ -739,12 +784,17 @@ namespace DocGOST
             int startPage = (startFromSecondCheckBox.IsChecked == false) ? 1 : 2;
             bool addListRegistr = (addListRegistrCheckBox.IsChecked == true);
             pdf.CreatePerechen(pdfPath, startPage, addListRegistr, perTempSave.GetCurrent());
-            System.Diagnostics.Process.Start(pdfPath);
+            System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
 
             pdfPath = "Спецификация.pdf";
             pdf = new PdfOperations(projectPath);
             pdf.CreateSpecification(pdfPath, startPage, addListRegistr, specTempSave.GetCurrent());
-            System.Diagnostics.Process.Start(pdfPath);
+            System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
+
+            pdfPath = "ВП.pdf";
+            pdf = new PdfOperations(projectPath);
+            pdf.CreateVedomost(pdfPath, startPage, addListRegistr, vedomostTempSave.GetCurrent());
+            System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
         }
 
         /// <summary> При закрытии окна программы выполняется проверка, сохранён ли проект, и показывается соответствующее диалоговое окно </summary>        
@@ -758,7 +808,7 @@ namespace DocGOST
                     (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
                 {
                     closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNo);
-                    if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetLastSavedState());
+                    if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent());
                 }
                 project.DeleteTempData();
             }                
@@ -769,29 +819,27 @@ namespace DocGOST
         /// <param name="pData"> Список с данными для перечня элементов, которые будут сгруппированы</param>
         /// <param name="sData"> Список с данными спецификации без данных раздела "Прочие изделия"</param>
         /// <param name="sOtherData"> Список с данными спецификации из раздела данных "Прочие изделия", которые будут сгруппированы</param>
-        private void groupByName(List<PerechenItem> pData, List<SpecificationItem> sData, List<SpecificationItem> sOtherData)
+        /// <param name="vData"> Список с данными для ведомости, которые будут сгруппированы</param>
+        private void groupByName(List<PerechenItem> pData, List<SpecificationItem> sData, List<SpecificationItem> sOtherData, List<VedomostItem> vData)
         {
 
             int numOfPerechenValidStrings = pData.Count;
             int numOfSpecificationStrings = sOtherData.Count;
-
-
-            for (int i = 1; i <= numOfPerechenValidStrings; i++)
-            {
-                pData.Add(project.GetPerechenItem(i, perTempSave.GetCurrent()));
-            }
+            int numOfVedomostValidStrings = vData.Count;
+                        
 
             (new PerechenOperations()).groupPerechenElements(ref pData, ref numOfPerechenValidStrings);
-
-
-
+            
             sOtherData = (new SpecificationOperations()).groupSpecificationElements(sOtherData, ref numOfSpecificationStrings);
+
+            vData = (new VedomostOperations()).groupVedomostElements(vData, ref numOfVedomostValidStrings);
 
             //Запись значений в файл и вывод сгруппированных строк в окно программы:
 
             List<PerechenItem> perResult = new List<PerechenItem>(numOfPerechenValidStrings);
             List<SpecificationItem> specResult = new List<SpecificationItem>(numOfSpecificationStrings + sData.Count);
-
+            List<VedomostItem> vedomostResult = new List<VedomostItem>(numOfVedomostValidStrings);
+            
             for (int i = 0; i < numOfPerechenValidStrings; i++)
             {
                 PerechenItem pd = pData[i];
@@ -800,8 +848,6 @@ namespace DocGOST
                 perResult.Add(pd);
                 project.AddPerechenItem(pd);
             }
-
-
 
             for (int i = 0; i < numOfSpecificationStrings + sData.Count; i++)
             {
@@ -821,8 +867,17 @@ namespace DocGOST
                 }
             }
 
-            perechenListView.ItemsSource = perResult;
-            DisplayAllValues();
+            for (int i = 0; i < numOfVedomostValidStrings; i++)
+            {
+                VedomostItem vd = vData[i];               
+                vd.id = id.makeID(i + 1, perTempSave.GetCurrent());
+                vedomostResult.Add(vd);
+                project.AddVedomostItem(vd);
+            }
+
+            DisplayPerValues(perResult);
+            DisplaySpecValues(specResult);
+            DisplayVedomostValues(vedomostResult);
         }
 
         /// <summary> Редактирование основной надписи </summary>
@@ -846,7 +901,7 @@ namespace DocGOST
         /// <summary> Изменение ширины столбцов элементов ListView при изменении размеров окна </summary>
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            double coef = (perechenListView.ActualWidth - 270) / 742; //Изначально ширина Listview 1012, 3 кнопки постоянной ширины в ListView по 90 = 270
+            double coef = (perechenListView.ActualWidth - 270) / 742; //742 - сумма ширин всех столбцов, кроме 3 кнопок постоянной ширины по 90 = 270
             designatorPerechenColumn.Width = 120 * coef;
             namePerechenColumn.Width = 410 * coef;
             quantityPerechenColumn.Width = 70 * coef;
@@ -860,6 +915,18 @@ namespace DocGOST
             nameSpecColumn.Width = 280 * coef;
             quantitySpecColumn.Width = 30 * coef;
             noteSpecColumn.Width = 40 * coef;
+
+            coef = (vedomostListView.ActualWidth - 210) / 1230; //1230 - сумма ширин всех столбцов, кроме 3 кнопок постоянной ширины по 90 + 60 +60 = 210
+            nameVedomostColumn.Width = 210 * coef;
+            kodVedomostColumn.Width = 70 * coef;
+            documVedomostColumn.Width = 180 * coef;
+            supplierVedomostColumn.Width = 110 * coef;
+            belongsVedomostColumn.Width = 110 * coef;
+            quantityIzdelieVedomostColumn.Width = 120 * coef;
+            quantityComplectsVedomostColumn.Width = 120 * coef;
+            quantityRegulVedomostColumn.Width = 120 * coef;
+            quantityTotalVedomostColumn.Width = 50 * coef;
+            noteVedomostColumn.Width = 140 * coef;
         }
 
         /// <summary> Правка текущей строки перечня </summary>
@@ -1182,6 +1249,124 @@ namespace DocGOST
             DisplaySpecValues(specList);
         }
 
+        /// <summary> Правка текущей строки ведомости </summary>
+        private void VedomostEdit_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+
+            // Создаём список элементов ведомости, хранящийся в оперативной памяти для ускорения работы программы:
+            int vedomostLength = project.GetVedomostLength(perTempSave.GetCurrent());
+            List<VedomostItem> tempVedomostList = new List<VedomostItem>(vedomostLength);
+
+            for (int i = 1; i <= vedomostLength; i++)
+            {
+                tempVedomostList.Add(project.GetVedomostItem(i, vedomostTempSave.GetCurrent()));
+            }
+
+            int strNum = id.getStrNum((b.CommandParameter as VedomostItem).id);
+
+
+            EditVedomostItemWindow editWindow = new EditVedomostItemWindow(projectPath, strNum, vedomostTempSave.GetCurrent(), vedomostTempSave.GetCurrent() + 1);
+            if (editWindow.ShowDialog() == true)
+            {
+                project.DeleteVedomostTempData(vedomostTempSave.SetNext()); // Увеличиваем номер текущего сохранения и одновременно удаляем все последующие сохранения
+
+                for (int i = 1; i <= vedomostLength; i++)
+                {
+                    if (i != strNum)
+                    {
+                        tempVedomostList[i - 1].id = id.makeID(i, vedomostTempSave.GetCurrent());
+                        project.AddVedomostItem(tempVedomostList[i - 1]);
+                    }
+
+                }
+
+                tempVedomostList[strNum - 1] = project.GetVedomostItem(strNum, vedomostTempSave.GetCurrent());
+                project.AddVedomostItem(tempVedomostList[strNum - 1]);
+
+                DisplayVedomostValues(tempVedomostList);
+            }
+    
+        }
+
+        /// <summary> Добавление к ведомости пустой строки сверху </summary>
+        private void VedomostAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum = id.getStrNum((b.CommandParameter as VedomostItem).id);
+            int length = project.GetVedomostLength(vedomostTempSave.GetCurrent());
+            List<VedomostItem> vedomostList = new List<VedomostItem>();
+
+            int prevTempSave = vedomostTempSave.GetCurrent();
+            project.DeleteVedomostTempData(vedomostTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            int currentTempSave = vedomostTempSave.SetNext(); // Увеличиваем номер текущего сохранения
+
+            for (int i = 1; i <= length + 1; i++)
+            {
+                VedomostItem vedomostItem = new VedomostItem();
+
+                if (i < strNum)
+                {
+                    vedomostItem = project.GetVedomostItem(i, prevTempSave);
+                    vedomostItem.id = id.makeID(i, currentTempSave);
+                    vedomostList.Add(vedomostItem);
+                }
+                else if (i == strNum)
+                {
+                    vedomostItem.id = id.makeID(i, currentTempSave);
+                    vedomostList.Add(vedomostItem);
+                }
+                else if (i > strNum)
+                {
+                    vedomostItem = project.GetVedomostItem(i - 1, prevTempSave);
+                    vedomostItem.id = id.makeID(i, currentTempSave);
+                    vedomostList.Add(vedomostItem);
+                }
+
+            }
+
+            for (int i = 0; i < vedomostList.Count; i++) project.AddVedomostItem(vedomostList[i]);
+
+            DisplayVedomostValues(vedomostList);
+        }
+
+        /// <summary> Удаление из ведомости текущей строки </summary>
+        private void VedomostDelete_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            int strNum = id.getStrNum((b.CommandParameter as VedomostItem).id);
+            int length = project.GetVedomostLength(vedomostTempSave.GetCurrent());
+            List<VedomostItem> vedomostList = new List<VedomostItem>();
+
+            int prevTempSave = vedomostTempSave.GetCurrent();
+            project.DeleteVedomostTempData(vedomostTempSave.GetCurrent()); // Удаляем все последующие сохранения
+            vedomostTempSave.SetNext(); // Увеличиваем номер текущего сохранения
+            int currentTempSave = vedomostTempSave.GetCurrent();
+
+            for (int i = 1; i <= length; i++)
+            {
+                VedomostItem vedomostItem = new VedomostItem();
+
+                if (i < strNum)
+                {
+                    vedomostItem = project.GetVedomostItem(i, prevTempSave);
+                    vedomostItem.id = id.makeID(i, currentTempSave);
+                    vedomostList.Add(vedomostItem);
+                }
+                else if (i > strNum)
+                {
+                    vedomostItem = project.GetVedomostItem(i, prevTempSave);
+                    vedomostItem.id = id.makeID(i - 1, currentTempSave);
+                    vedomostList.Add(vedomostItem);
+                }
+
+            }
+
+            for (int i = 0; i < vedomostList.Count; i++) project.AddVedomostItem(vedomostList[i]);
+
+            DisplayVedomostValues(vedomostList);
+        }
+
         /// <summary> Сохранение проекта </summary>
         private void SaveProject_Click(object sender, RoutedEventArgs e)
         {
@@ -1202,7 +1387,7 @@ namespace DocGOST
             {
                 if (perechenListView.Visibility == Visibility.Visible) perTempSave.SetPrevIfExist();
                 if (specificationTabControl.Visibility == Visibility.Visible) specTempSave.SetPrevIfExist();
-
+                if (vedomostListView.Visibility == Visibility.Visible) vedomostTempSave.SetPrevIfExist();
                 DisplayAllValues();
             }
         }
@@ -1214,7 +1399,7 @@ namespace DocGOST
             {
                 if (perechenListView.Visibility == Visibility.Visible) perTempSave.SetNextIfExist();
                 if (specificationTabControl.Visibility == Visibility.Visible) specTempSave.SetNextIfExist();
-
+                if (vedomostListView.Visibility == Visibility.Visible) vedomostTempSave.SetNextIfExist();
                 DisplayAllValues();
             }
 

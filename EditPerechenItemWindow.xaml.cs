@@ -45,7 +45,7 @@ namespace DocGOST
             nameTextBox.Text = perItem.name;
             quantityTextBox.Text = perItem.quantity;
             noteTextBox.Text = perItem.note;
-            isNameUnderlinedCheckBox.IsChecked = perItem.isNameUnderlinded;
+            isNameUnderlinedCheckBox.IsChecked = perItem.isNameUnderlined;
         }
 
         PerechenItem perItem;
@@ -57,13 +57,13 @@ namespace DocGOST
                 (nameTextBox.Text != perItem.name) |
                 (quantityTextBox.Text != perItem.quantity) |
                 (noteTextBox.Text != perItem.note)|
-                ((bool)isNameUnderlinedCheckBox.IsChecked != perItem.isNameUnderlinded))
+                ((bool)isNameUnderlinedCheckBox.IsChecked != perItem.isNameUnderlined))
             {
                 perItem.designator = designatorTextBox.Text;
                 perItem.name = nameTextBox.Text;
                 perItem.quantity = quantityTextBox.Text;
                 perItem.note = noteTextBox.Text;
-                perItem.isNameUnderlinded = (bool)isNameUnderlinedCheckBox.IsChecked;
+                perItem.isNameUnderlined = (bool)isNameUnderlinedCheckBox.IsChecked;
                 
                 project.AddPerechenItem(perItem);
 

@@ -26,8 +26,6 @@ using iTextSharp.text.pdf;
 using iTextSharp.text;
 using DocGOST.Data;
 
-
-
 namespace DocGOST
 {
     class PdfOperations
@@ -38,6 +36,9 @@ namespace DocGOST
 
         const int spec_first_page_rows_count = 23;
         const int spec_subseq_page_rows_count = 29;
+
+        const int vedomost_first_page_rows_count = 24;
+        const int vedomost_subseq_page_rows_count = 29;
 
         Font normal, big, veryBig;
         ProjectDB project;
@@ -216,6 +217,65 @@ namespace DocGOST
 
         }
 
+        public void CreateVedomost(string pdfPath, int startPage, bool addListRegistr, int tempNumber)
+        {
+            bool isFileLocked = false;
+
+            Document document = null;
+            PdfWriter writer = null;
+
+            try
+            {
+                document = new Document(PageSize.A3.Rotate());
+                
+                writer = PdfWriter.GetInstance(document, new FileStream(pdfPath, FileMode.Create));
+            }
+            catch
+            {
+                MessageBox.Show("Не удаётся получить доступ к файлу " + pdfPath + ". Скорее всего, файл открыт в другой программе.", "Ошибка", MessageBoxButton.OK);
+                isFileLocked = true;
+            }
+
+            if (isFileLocked == false)
+            {
+                document.Open();
+
+                DrawCommonStampA3(document, writer, DocType.Perechen);
+
+                int numberOfValidStrings = project.GetVedomostLength(tempNumber);
+
+                //Вычисляем общее количество листов без учёта листа регистрации
+                int totalPageCount = 2 + (numberOfValidStrings - vedomost_first_page_rows_count) / vedomost_subseq_page_rows_count;
+
+                DrawFirstPageStampA3(document, writer, startPage, totalPageCount + (addListRegistr ? 1 : 0) + (startPage - 1), DocType.Vedomost);
+
+                DrawVedomostTable(document, writer, 0, tempNumber);
+
+                if (numberOfValidStrings > vedomost_first_page_rows_count)
+                    for (int i = 1; i < totalPageCount; i++)
+                    {
+                        document.NewPage();
+
+                        DrawCommonStampA3(document, writer, DocType.Vedomost);
+                        DrawSubsequentStampA3(document, writer, i + startPage, DocType.Vedomost);
+                        DrawVedomostTable(document, writer, i, tempNumber);
+
+                    }
+                if (addListRegistr)
+                {
+                    document.SetPageSize(PageSize.A4);
+                    document.NewPage();                   
+
+                    DrawCommonStampA4(document, writer, DocType.Vedomost);
+                    DrawSubsequentStampA4(document, writer, totalPageCount + startPage, DocType.Vedomost);
+                    DrawListRegistrTable(document, writer);
+                }
+                document.Close();
+                writer.Close();
+            }
+
+        }
+
         private void DrawCommonStampA4(Document doc, PdfWriter wr, DocType docType)
         {
 
@@ -325,6 +385,120 @@ namespace DocGOST
             currentCell.PaddingLeft = 2;
             table31_32.AddCell(currentCell);
             table31_32.WriteSelectedRows(0, 1, 75 * mm_A4, 5 * mm_A4, cb);
+
+
+            #endregion
+        }
+
+        private void DrawCommonStampA3(Document doc, PdfWriter wr, DocType docType)
+        {
+
+            PdfContentByte cb = wr.DirectContent;
+
+            // Черчение рамки:
+            float mm_A3 = doc.PageSize.Width / 420;
+
+            cb.MoveTo(20 * mm_A3, 5 * mm_A3);
+            cb.LineTo(20 * mm_A3, 292 * mm_A3);//Левая граница
+            cb.LineTo(415 * mm_A3, 292 * mm_A3);//Верхняя граница
+            cb.LineTo(415 * mm_A3, 5 * mm_A3);//Правая граница
+            cb.LineTo(20 * mm_A3, 5 * mm_A3);//Нижняя граница
+            cb.Stroke();
+
+            #region Рисование табицы с графами 19-23            
+            PdfPTable table19_23 = new PdfPTable(2);
+            table19_23.TotalWidth = 12 * mm_A3;
+            table19_23.LockedWidth = true;
+            float[] tbldWidths = new float[2];
+            tbldWidths[0] = 5;
+            tbldWidths[1] = 7;
+            table19_23.SetWidths(tbldWidths);
+
+            // Заполнение графы 19:
+            PdfPCell currentCell = new PdfPCell(new Phrase("Инв. № подл.", normal));
+            currentCell.BorderWidth = 1;
+            currentCell.Rotation = 90;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 25 * mm_A3;
+            table19_23.AddCell(currentCell);
+            string gr19Text = String.Empty;
+            if (docType == DocType.Specification) gr19Text = project.GetOsnNadpisItem("19").specificationValue;
+            if (docType == DocType.Perechen) gr19Text = project.GetOsnNadpisItem("19").perechenValue;
+            currentCell.Phrase = new Phrase(gr19Text, normal);
+            currentCell.PaddingLeft = 2;
+            table19_23.AddCell(currentCell);
+            table19_23.WriteSelectedRows(0, 1, 8 * mm_A3, 30 * mm_A3, cb);
+            // Заполнение графы 20:
+            currentCell.Phrase = new Phrase("Подп. и дата", normal);
+            currentCell.PaddingLeft = 0;
+            currentCell.FixedHeight = 35 * mm_A3;
+            table19_23.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("", normal);
+            currentCell.PaddingLeft = 2;
+            table19_23.AddCell(currentCell);
+            table19_23.WriteSelectedRows(1, 2, 8 * mm_A3, 65 * mm_A3, cb);
+            // Заполнение графы 21:
+            currentCell.Phrase = new Phrase("Взам. инв. №", normal);
+            currentCell.PaddingLeft = 0;
+            currentCell.FixedHeight = 25 * mm_A3;
+            table19_23.AddCell(currentCell);
+            string gr21Text = String.Empty;
+            if (docType == DocType.Specification) gr21Text = project.GetOsnNadpisItem("21").specificationValue;
+            if (docType == DocType.Perechen) gr21Text = project.GetOsnNadpisItem("21").perechenValue;
+            currentCell.Phrase = new Phrase(gr21Text, normal);
+            currentCell.PaddingLeft = 2;
+            table19_23.AddCell(currentCell);
+            table19_23.WriteSelectedRows(2, 3, 8 * mm_A3, 90 * mm_A3, cb);
+            // Заполнение графы 22:
+            currentCell.Phrase = new Phrase("Инв. № дубл.", normal);
+            currentCell.PaddingLeft = 0;
+            currentCell.FixedHeight = 25 * mm_A3;
+            table19_23.AddCell(currentCell);
+            string gr22Text = String.Empty;
+            if (docType == DocType.Specification) gr22Text = project.GetOsnNadpisItem("22").specificationValue;
+            if (docType == DocType.Perechen) gr22Text = project.GetOsnNadpisItem("22").perechenValue;
+            currentCell.Phrase = new Phrase(gr22Text, normal);
+            currentCell.PaddingLeft = 2;
+            table19_23.AddCell(currentCell);
+            table19_23.WriteSelectedRows(3, 4, 8 * mm_A3, 115 * mm_A3, cb);
+            // Заполнение графы 23:
+            currentCell.Phrase = new Phrase("Подп. и дата", normal);
+            currentCell.PaddingLeft = 0;
+            currentCell.FixedHeight = 35 * mm_A3;
+            table19_23.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("", normal);
+            currentCell.PaddingLeft = 2;
+            table19_23.AddCell(currentCell);
+            table19_23.WriteSelectedRows(4, 5, 8 * mm_A3, 150 * mm_A3, cb);
+
+            #endregion
+
+
+            #region Рисование табицы с графами 31, 32            
+            PdfPTable table31_32 = new PdfPTable(2);
+            table31_32.TotalWidth = 130 * mm_A3;
+            table31_32.LockedWidth = true;
+            tbldWidths[0] = 80;
+            tbldWidths[1] = 50;
+            table31_32.SetWidths(tbldWidths);
+
+            // Заполнение графы 31:
+            currentCell = new PdfPCell(new Phrase("Копировал", normal));
+            currentCell.BorderWidth = 0;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 5 * mm_A3;
+            table31_32.AddCell(currentCell);
+            // Заполнение графы 31:
+            currentCell.Phrase = new Phrase("Формат А3", normal);
+            currentCell.PaddingLeft = 2;
+            table31_32.AddCell(currentCell);
+            table31_32.WriteSelectedRows(0, 1, 285 * mm_A3, 5 * mm_A3, cb);
 
 
             #endregion
@@ -748,6 +922,438 @@ namespace DocGOST
             #endregion
         }
 
+        private void DrawFirstPageStampA3(Document doc, PdfWriter wr, int pageNumber, int pagesTotal, DocType docType)
+        {
+            PdfContentByte cb = wr.DirectContent;
+
+            float[] tbldWidths;
+            float mm_A3 = doc.PageSize.Width / 420;
+            
+            #region Рисование табицы с графами 24,25            
+            PdfPTable table24_25 = new PdfPTable(2);
+            table24_25.TotalWidth = 12 * mm_A3;
+            table24_25.LockedWidth = true;
+            tbldWidths = new float[2];
+            tbldWidths[0] = 5;
+            tbldWidths[1] = 7;
+            table24_25.SetWidths(tbldWidths);
+
+            // Заполнение графы 24:
+            PdfPCell currentCell = new PdfPCell(new Phrase("Справ. №", normal));
+            currentCell.BorderWidth = 1;
+            currentCell.Rotation = 90;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 60 * mm_A3;
+            table24_25.AddCell(currentCell);
+            string gr24Text = String.Empty;
+            if (docType == DocType.Specification) gr24Text = project.GetOsnNadpisItem("24").specificationValue;
+            if (docType == DocType.Perechen) gr24Text = project.GetOsnNadpisItem("24").perechenValue;
+            if (docType == DocType.Vedomost) gr24Text = project.GetOsnNadpisItem("24").vedomostValue;
+            currentCell.Phrase = new Phrase(gr24Text, normal);
+            currentCell.PaddingLeft = 2;
+            table24_25.AddCell(currentCell);
+            table24_25.WriteSelectedRows(0, 1, 8 * mm_A3, 232 * mm_A3, cb);
+            // Заполнение графы 25:
+            currentCell.Phrase = new Phrase("Перв. примен.", normal);
+            currentCell.PaddingLeft = 0;
+            currentCell.FixedHeight = 60 * mm_A3;
+            table24_25.AddCell(currentCell);
+            string gr25Text = String.Empty;
+            if (docType == DocType.Specification) gr25Text = project.GetOsnNadpisItem("25").specificationValue;
+            if (docType == DocType.Perechen) gr25Text = project.GetOsnNadpisItem("25").perechenValue;
+            if (docType == DocType.Vedomost) gr25Text = project.GetOsnNadpisItem("25").vedomostValue;
+            currentCell.Phrase = new Phrase(gr25Text, normal);
+            currentCell.PaddingLeft = 2;
+            table24_25.AddCell(currentCell);
+            table24_25.WriteSelectedRows(1, 2, 8 * mm_A3, 292 * mm_A3, cb);
+            #endregion
+
+            #region Рисование графы 1           
+            PdfPTable table1 = new PdfPTable(1);
+            table1.TotalWidth = 70 * mm_A3;
+            table1.LockedWidth = true;
+
+            //Определяем, сколько строчек нужно для наименования изделия:
+            int kolvoStrGg1 = 2;
+            int naimenovaieMaxLength = 25;
+            string naimenovanieStr1 = "", naimenovanieStr2 = "";
+            string gr1aText = String.Empty;
+            if (docType == DocType.Specification) gr1aText = project.GetOsnNadpisItem("1a").specificationValue;
+            if (docType == DocType.Perechen) gr1aText = project.GetOsnNadpisItem("1a").perechenValue;
+
+            if (gr1aText.Length > naimenovaieMaxLength)
+            {
+                kolvoStrGg1 = 3;
+
+
+                string[] naimenovanieStrings = gr1aText.Split(' ');
+                foreach (string currentString in naimenovanieStrings)
+                {
+                    if (naimenovanieStr1.Length + currentString.Length + 1 < naimenovaieMaxLength) naimenovanieStr1 += currentString + " ";
+                    else naimenovanieStr2 += currentString + " ";
+                }
+            }
+
+            // Заполнение графы 1:
+            if (kolvoStrGg1 == 2)
+            {
+                currentCell = new PdfPCell(new Phrase(gr1aText, big));
+                currentCell.BorderWidth = 1;
+                currentCell.DisableBorderSide(Rectangle.BOTTOM_BORDER);
+                currentCell.HasFixedHeight();
+                currentCell.Padding = 0;
+                currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                currentCell.FixedHeight = 18 * mm_A3;
+                table1.AddCell(currentCell);
+                table1.WriteSelectedRows(0, 1, 295 * mm_A3, 30 * mm_A3, cb);
+                string gr1bText = project.GetOsnNadpisItem("1b").perechenValue;
+                if (docType == DocType.Specification) gr1bText = project.GetOsnNadpisItem("1b").specificationValue;
+                if (docType == DocType.Vedomost) gr1bText = project.GetOsnNadpisItem("1b").vedomostValue;
+                currentCell.Phrase = new Phrase(gr1bText, normal);
+                currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                currentCell.BorderWidth = 1;
+                currentCell.DisableBorderSide(Rectangle.TOP_BORDER);
+                currentCell.FixedHeight = 7 * mm_A3;
+                table1.AddCell(currentCell);
+                table1.WriteSelectedRows(1, 2, 295 * mm_A3, 12 * mm_A3, cb);
+            }
+            else
+            {
+                currentCell = new PdfPCell(new Phrase(naimenovanieStr1, big));
+                currentCell.BorderWidth = 1;
+                currentCell.DisableBorderSide(Rectangle.BOTTOM_BORDER);
+                currentCell.HasFixedHeight();
+                currentCell.Padding = 0;
+                currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                currentCell.FixedHeight = 10 * mm_A3;
+                table1.AddCell(currentCell);
+                table1.WriteSelectedRows(0, 1, 295 * mm_A3, 30 * mm_A3, cb);
+                currentCell.Phrase = new Phrase(naimenovanieStr2, big);
+                currentCell.DisableBorderSide(Rectangle.TOP_BORDER);
+                currentCell.FixedHeight = 10 * mm_A3;
+                table1.AddCell(currentCell);
+                table1.WriteSelectedRows(1, 2, 295 * mm_A3, 20 * mm_A3, cb);
+                string gr1bText = project.GetOsnNadpisItem("1b").perechenValue;
+                if (docType == DocType.Specification) gr1bText = project.GetOsnNadpisItem("1b").specificationValue;
+                if (docType == DocType.Vedomost) gr1bText = project.GetOsnNadpisItem("1b").vedomostValue;
+                currentCell.Phrase = new Phrase(gr1bText, normal);
+                currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                currentCell.EnableBorderSide(Rectangle.BOTTOM_BORDER);
+                currentCell.FixedHeight = 5 * mm_A3;
+                table1.AddCell(currentCell);
+                table1.WriteSelectedRows(2, 3, 295 * mm_A3, 10 * mm_A3, cb);
+            }
+
+            #endregion
+
+            #region Рисование графы 2           
+            PdfPTable table2 = new PdfPTable(1);
+            table2.TotalWidth = 120 * mm_A3;
+            table2.LockedWidth = true;
+
+
+            // Заполнение графы 2:
+            string gr2Text = String.Empty;
+            if (docType == DocType.Specification) gr2Text = project.GetOsnNadpisItem("2").specificationValue;
+            if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            if (docType == DocType.Vedomost) gr2Text = project.GetOsnNadpisItem("2").vedomostValue;
+
+            currentCell = new PdfPCell(new Phrase(gr2Text, veryBig));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingBottom = 6;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 15 * mm_A3;
+            table2.AddCell(currentCell);
+            table2.WriteSelectedRows(0, 1, 295 * mm_A3, 45 * mm_A3, cb);
+            #endregion
+
+            #region Рисование табицы с графами 4,7,8            
+            PdfPTable table4_8 = new PdfPTable(3);
+            table4_8.TotalWidth = 50 * mm_A3;
+            table4_8.LockedWidth = true;
+            tbldWidths = new float[3];
+            tbldWidths[0] = 15;
+            tbldWidths[1] = 15;
+            tbldWidths[2] = 20;
+            table4_8.SetWidths(tbldWidths);
+
+            // Заполнение заголовков граф 4,7,8:
+            currentCell = new PdfPCell(new Phrase("Лит.", normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 5 * mm_A3;
+            table4_8.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Лист", normal);
+            table4_8.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Листов", normal);
+            table4_8.AddCell(currentCell);
+            // Заполнение граф 4,7,8:
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            table4_8.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(pageNumber.ToString(), normal);
+            table4_8.AddCell(currentCell);
+            string gr8Text = gr8Text = pagesTotal.ToString();
+            currentCell.Phrase = new Phrase(gr8Text, normal);
+            table4_8.AddCell(currentCell);
+            table4_8.WriteSelectedRows(0, 2, 365 * mm_A3, 30 * mm_A3, cb);
+
+            // Заполнение графы 4:
+            PdfPTable table4 = new PdfPTable(3);
+            table4.TotalWidth = 15 * mm_A3;
+            table4.LockedWidth = true;
+            tbldWidths = new float[3];
+            tbldWidths[0] = 5;
+            tbldWidths[1] = 5;
+            tbldWidths[2] = 5;
+            table4.SetWidths(tbldWidths);
+            string gr4aText = String.Empty;
+            if (docType == DocType.Specification) gr4aText = project.GetOsnNadpisItem("4a").specificationValue;
+            if (docType == DocType.Perechen) gr4aText = project.GetOsnNadpisItem("4a").perechenValue;
+            if (docType == DocType.Vedomost) gr4aText = project.GetOsnNadpisItem("4a").vedomostValue;
+            currentCell = new PdfPCell(new Phrase(gr4aText, normal));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 5 * mm_A3;
+            table4.AddCell(currentCell);
+            string gr4bText = String.Empty;
+            if (docType == DocType.Specification) gr4bText = project.GetOsnNadpisItem("4b").specificationValue;
+            if (docType == DocType.Perechen) gr4bText = project.GetOsnNadpisItem("4b").perechenValue;
+            if (docType == DocType.Vedomost) gr4bText = project.GetOsnNadpisItem("4b").vedomostValue;
+            currentCell.Phrase = new Phrase(gr4bText, normal);
+            table4.AddCell(currentCell);
+            string gr4cText = String.Empty;
+            if (docType == DocType.Specification) gr4cText = project.GetOsnNadpisItem("4c").specificationValue;
+            if (docType == DocType.Perechen) gr4cText = project.GetOsnNadpisItem("4c").perechenValue;
+            if (docType == DocType.Vedomost) gr4cText = project.GetOsnNadpisItem("4c").vedomostValue;
+            currentCell.Phrase = new Phrase(gr4cText, normal);
+            table4.AddCell(currentCell);
+            table4.WriteSelectedRows(0, 1, 365 * mm_A3, 25 * mm_A3, cb);
+            #endregion
+
+            #region Рисование таблицы с графами 10-18
+            //Рисование толстых линий и заполнение заголовков граф 14-18
+            PdfPTable table10_18 = new PdfPTable(5);
+            table10_18.TotalWidth = 65 * mm_A3;
+            table10_18.LockedWidth = true;
+            tbldWidths = new float[5];
+            tbldWidths[0] = 7;
+            tbldWidths[1] = 10;
+            tbldWidths[2] = 23;
+            tbldWidths[3] = 15;
+            tbldWidths[4] = 10;
+            table10_18.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 10 * mm_A3;
+            for (int i = 0; i < 5; i++) table10_18.AddCell(currentCell);
+            currentCell.FixedHeight = 5 * mm_A3;
+            currentCell.Phrase = new Phrase("Изм.", normal);
+            table10_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Лист", normal);
+            table10_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("№ докум.", normal);
+            table10_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Подп.", normal);
+            table10_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Дата", normal);
+            table10_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            currentCell.FixedHeight = 25 * mm_A3;
+            currentCell.DisableBorderSide(Rectangle.RIGHT_BORDER);
+            table10_18.AddCell(currentCell);
+            currentCell.EnableBorderSide(Rectangle.RIGHT_BORDER);
+            currentCell.DisableBorderSide(Rectangle.LEFT_BORDER);
+            table10_18.AddCell(currentCell);
+            currentCell.EnableBorderSide(Rectangle.LEFT_BORDER);
+            for (int i = 0; i < 3; i++) table10_18.AddCell(currentCell);
+            table10_18.WriteSelectedRows(0, 3, 230 * mm_A3, 45 * mm_A3, cb);
+            //Рисование тонкими линиями и заполнение граф 14-18
+            PdfPTable table14_18 = new PdfPTable(5);
+            table14_18.TotalWidth = 65 * mm_A3;
+            table14_18.LockedWidth = true;
+            tbldWidths = new float[5];
+            tbldWidths[0] = 7;
+            tbldWidths[1] = 10;
+            tbldWidths[2] = 23;
+            tbldWidths[3] = 15;
+            tbldWidths[4] = 10;
+            table14_18.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 5 * mm_A3;
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.WriteSelectedRows(0, 1, 230 * mm_A3, 45 * mm_A3, cb);
+            string gr14aText = String.Empty;
+            if (docType == DocType.Specification) gr14aText = project.GetOsnNadpisItem("14a").specificationValue;
+            if (docType == DocType.Perechen) gr14aText = project.GetOsnNadpisItem("14a").perechenValue;
+            if (docType == DocType.Vedomost) gr14aText = project.GetOsnNadpisItem("14a").vedomostValue;
+            currentCell.Phrase = new Phrase(gr14aText, normal);
+            table14_18.AddCell(currentCell);
+            string gr15aText = String.Empty;
+            if (docType == DocType.Specification) gr15aText = project.GetOsnNadpisItem("15a").specificationValue;
+            if (docType == DocType.Perechen) gr15aText = project.GetOsnNadpisItem("15a").perechenValue;
+            if (docType == DocType.Vedomost) gr15aText = project.GetOsnNadpisItem("15a").vedomostValue;
+            currentCell.Phrase = new Phrase(gr15aText, normal);
+            table14_18.AddCell(currentCell);
+            string gr16aText = String.Empty;
+            if (docType == DocType.Specification) gr16aText = project.GetOsnNadpisItem("16a").specificationValue;
+            if (docType == DocType.Perechen) gr16aText = project.GetOsnNadpisItem("16a").perechenValue;
+            if (docType == DocType.Vedomost) gr16aText = project.GetOsnNadpisItem("16a").vedomostValue;
+            currentCell.Phrase = new Phrase(gr16aText, normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.WriteSelectedRows(1, 2, 230 * mm_A3, 40 * mm_A3, cb);
+
+            //Рисование тонкими линиями и заполнение граф 10-13
+            PdfPTable table10_13 = new PdfPTable(4);
+            table10_13.TotalWidth = 65 * mm_A3;
+            table10_13.LockedWidth = true;
+            tbldWidths = new float[4];
+            tbldWidths[0] = 17;
+            tbldWidths[1] = 23;
+            tbldWidths[2] = 15;
+            tbldWidths[3] = 10;
+            table10_13.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase("Разраб.", normal));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingLeft = 3;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
+            currentCell.FixedHeight = 5 * mm_A3;
+            table10_13.AddCell(currentCell);
+            string gr11aText = String.Empty;
+            if (docType == DocType.Specification) gr11aText = project.GetOsnNadpisItem("11a").specificationValue;
+            if (docType == DocType.Perechen) gr11aText = project.GetOsnNadpisItem("11a").perechenValue;
+            if (docType == DocType.Vedomost) gr1aText = project.GetOsnNadpisItem("11a").vedomostValue;
+            currentCell.Phrase = new Phrase(gr11aText, normal);
+            table10_13.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
+            table10_13.WriteSelectedRows(0, 1, 230 * mm_A3, 30 * mm_A3, cb);
+            currentCell.Phrase = new Phrase("Пров.", normal);
+            table10_13.AddCell(currentCell);
+            string gr11bText = String.Empty;
+            if (docType == DocType.Specification) gr11bText = project.GetOsnNadpisItem("11b").specificationValue;
+            if (docType == DocType.Perechen) gr11bText = project.GetOsnNadpisItem("11b").perechenValue;
+            if (docType == DocType.Vedomost) gr11bText = project.GetOsnNadpisItem("11b").vedomostValue;
+            currentCell.Phrase = new Phrase(gr11bText, normal);
+            table10_13.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
+            table10_13.WriteSelectedRows(1, 2, 230 * mm_A3, 25 * mm_A3, cb);
+            string gr10Text = String.Empty;
+            if (docType == DocType.Specification) gr10Text = project.GetOsnNadpisItem("10").specificationValue;
+            if (docType == DocType.Perechen) gr10Text = project.GetOsnNadpisItem("10").perechenValue;
+            if (docType == DocType.Vedomost) gr10Text = project.GetOsnNadpisItem("10").vedomostValue;
+            currentCell.Phrase = new Phrase(gr10Text, normal);
+            table10_13.AddCell(currentCell);
+            string gr11cText = String.Empty;
+            if (docType == DocType.Specification) gr11cText = project.GetOsnNadpisItem("11c").specificationValue;
+            if (docType == DocType.Perechen) gr11cText = project.GetOsnNadpisItem("11c").perechenValue;
+            if (docType == DocType.Vedomost) gr11cText = project.GetOsnNadpisItem("11c").vedomostValue;
+            currentCell.Phrase = new Phrase(gr11cText, normal);
+            table10_13.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
+            table10_13.WriteSelectedRows(2, 3, 230 * mm_A3, 20 * mm_A3, cb);
+            currentCell.Phrase = new Phrase("Н. контр.", normal);
+            table10_13.AddCell(currentCell);
+            string gr11dText = String.Empty;
+            if (docType == DocType.Specification) gr11dText = project.GetOsnNadpisItem("11d").specificationValue;
+            if (docType == DocType.Perechen) gr11dText = project.GetOsnNadpisItem("11d").perechenValue;
+            if (docType == DocType.Vedomost) gr11dText = project.GetOsnNadpisItem("11d").vedomostValue;
+            currentCell.Phrase = new Phrase(gr11dText, normal);
+            table10_13.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
+            table10_13.WriteSelectedRows(3, 4, 230 * mm_A3, 15 * mm_A3, cb);
+            currentCell.Phrase = new Phrase("Утв.", normal);
+            table10_13.AddCell(currentCell);
+            string gr11eText = String.Empty;
+            if (docType == DocType.Specification) gr11eText = project.GetOsnNadpisItem("11e").specificationValue;
+            if (docType == DocType.Perechen) gr11eText = project.GetOsnNadpisItem("11e").perechenValue;
+            if (docType == DocType.Vedomost) gr11eText = project.GetOsnNadpisItem("11e").vedomostValue;
+            currentCell.Phrase = new Phrase(gr11eText, normal);
+            table10_13.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            for (int i = 0; i < 2; i++) table10_13.AddCell(currentCell);
+            table10_13.WriteSelectedRows(4, 5, 230 * mm_A3, 10 * mm_A3, cb);
+
+
+            #endregion
+
+            #region Рисование табицы с графами 27-29            
+            PdfPTable table27_29 = new PdfPTable(3);
+            table27_29.TotalWidth = 120 * mm_A3;
+            table27_29.LockedWidth = true;
+            tbldWidths = new float[3];
+            tbldWidths[0] = 14;
+            tbldWidths[1] = 53;
+            tbldWidths[2] = 53;
+            table27_29.SetWidths(tbldWidths);
+
+            // Заполнение граф 27-29:
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 14 * mm_A3;
+            table27_29.AddCell(currentCell);
+            table27_29.AddCell(currentCell);
+            table27_29.AddCell(currentCell);
+            table27_29.WriteSelectedRows(0, 1, 295 * mm_A3, 67 * mm_A3, cb);
+            #endregion
+
+            #region Рисование табицы с графой 30            
+            PdfPTable table30 = new PdfPTable(1);
+            table30.TotalWidth = 120 * mm_A3;
+            table30.LockedWidth = true;
+
+            // Заполнение графы 30:
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 8 * mm_A3;
+            table30.AddCell(currentCell);
+            table30.WriteSelectedRows(0, 1, 295 * mm_A3, 53 * mm_A3, cb);
+            #endregion
+        }
+
         private void DrawSubsequentStampA4(Document doc, PdfWriter wr, int pageNumber, DocType docType)
         {
             PdfContentByte cb = wr.DirectContent;
@@ -765,7 +1371,8 @@ namespace DocGOST
             // Заполнение графы 2:
             string gr2Text = String.Empty;
             if (docType == DocType.Specification) gr2Text = project.GetOsnNadpisItem("2").specificationValue;
-            if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            else if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            else if (docType == DocType.Vedomost) gr2Text = project.GetOsnNadpisItem("2").vedomostValue;
             PdfPCell currentCell = new PdfPCell(new Phrase(gr2Text, veryBig));
             currentCell.BorderWidth = 1;
             currentCell.HasFixedHeight();
@@ -862,6 +1469,121 @@ namespace DocGOST
             #endregion
         }
 
+        private void DrawSubsequentStampA3(Document doc, PdfWriter wr, int pageNumber, DocType docType)
+        {
+            PdfContentByte cb = wr.DirectContent;
+
+            float[] tbldWidths;
+
+            float mm_A3 = doc.PageSize.Width / 420;
+
+            #region Рисование графы 2           
+            PdfPTable table2 = new PdfPTable(1);
+            table2.TotalWidth = 110 * mm_A3;
+            table2.LockedWidth = true;
+
+
+            // Заполнение графы 2:
+            string gr2Text = String.Empty;
+            if (docType == DocType.Specification) gr2Text = project.GetOsnNadpisItem("2").specificationValue;
+            else if (docType == DocType.Perechen) gr2Text = project.GetOsnNadpisItem("2").perechenValue;
+            else if (docType == DocType.Vedomost) gr2Text = project.GetOsnNadpisItem("2").vedomostValue;
+            PdfPCell currentCell = new PdfPCell(new Phrase(gr2Text, veryBig));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingBottom = 6;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 15 * mm_A3;
+            table2.AddCell(currentCell);
+            table2.WriteSelectedRows(0, 1, 295 * mm_A3, 20 * mm_A3, cb);
+            #endregion
+
+            #region Рисование графы 7           
+            PdfPTable table7 = new PdfPTable(1);
+            table7.TotalWidth = 10 * mm_A3;
+            table7.LockedWidth = true;
+
+
+            // Заполнение графы 7:
+            currentCell = new PdfPCell(new Phrase("Лист", normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingBottom = 6;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 7 * mm_A3;
+            table7.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(pageNumber.ToString(), normal);
+            currentCell.FixedHeight = 8 * mm_A3;
+            table7.AddCell(currentCell);
+            table7.WriteSelectedRows(0, 2, 405 * mm_A3, 20 * mm_A3, cb);
+            #endregion
+
+            #region Рисование таблицы с графами 14-18
+            //Рисование толстых линий и заполнение заголовков граф 14-18
+            PdfPTable table14_18 = new PdfPTable(5);
+            table14_18.TotalWidth = 65 * mm_A3;
+            table14_18.LockedWidth = true;
+            tbldWidths = new float[5];
+            tbldWidths[0] = 7;
+            tbldWidths[1] = 10;
+            tbldWidths[2] = 23;
+            tbldWidths[3] = 15;
+            tbldWidths[4] = 10;
+            table14_18.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 10 * mm_A3;
+            for (int i = 0; i < 5; i++) table14_18.AddCell(currentCell);
+            currentCell.FixedHeight = 5 * mm_A3;
+            currentCell.Phrase = new Phrase("Изм.", normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Лист", normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("№ докум.", normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Подп.", normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Дата", normal);
+            table14_18.AddCell(currentCell);
+            table14_18.WriteSelectedRows(0, 2, 230 * mm_A3, 20 * mm_A3, cb);
+            //Рисование тонких линий и заполнение граф 14-18
+            table14_18 = new PdfPTable(5);
+            table14_18.TotalWidth = 65 * mm_A3;
+            table14_18.LockedWidth = true;
+            table14_18.SetWidths(tbldWidths);
+            currentCell = new PdfPCell(new Phrase(String.Empty, normal));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_CENTER;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 5 * mm_A3;
+            for (int i = 0; i < 5; i++) table14_18.AddCell(currentCell);
+            string gr14aText = project.GetOsnNadpisItem("14a").perechenValue;
+            currentCell.Phrase = new Phrase(gr14aText, normal);
+            table14_18.AddCell(currentCell);
+            string gr15aText = project.GetOsnNadpisItem("15a").perechenValue;
+            currentCell.Phrase = new Phrase(gr15aText, normal);
+            table14_18.AddCell(currentCell);
+            string gr16aText = project.GetOsnNadpisItem("16a").perechenValue;
+            currentCell.Phrase = new Phrase(gr16aText, normal);
+            table14_18.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, normal);
+            table14_18.AddCell(currentCell);
+            table14_18.AddCell(currentCell);
+            table14_18.WriteSelectedRows(0, 2, 230 * mm_A3, 20 * mm_A3, cb);
+
+            #endregion
+        }
+
         private void DrawPerechenTable(Document doc, PdfWriter wr, int pagesCount, int tempNumber)
         {
             float rowsHeight = 8.86f;
@@ -902,8 +1624,7 @@ namespace DocGOST
             perechTable.AddCell(currentCell);
             // Заполнение граф:                        
             int startIndex = perech_first_page_rows_count * (pagesCount == 0 ? 0 : 1) + perech_subseq_page_rows_count * (pagesCount > 1 ? pagesCount - 1 : 0); //номер первой строки на странице из общего кол-ва строк
-            int rowsCount = (pagesCount == 0) ? perech_first_page_rows_count : perech_subseq_page_rows_count;
-            //rowsCount = Math.Min(rowsCount, numberOfValidStrings - startIndex);
+            int rowsCount = (pagesCount == 0) ? perech_first_page_rows_count : perech_subseq_page_rows_count;           
             int numberOfValidStrings = project.GetPerechenLength(tempNumber);
             List<PerechenItem> pData = new List<PerechenItem>();
 
@@ -929,7 +1650,7 @@ namespace DocGOST
                         else
                         {
                             currentCell.Phrase = new Phrase(" ", normal);
-                            currentCell.Phrase.Add(new Phrase(" " + pData[j].name, (pData[j].isNameUnderlinded == true) ? underline : normal));
+                            currentCell.Phrase.Add(new Phrase(" " + pData[j].name, (pData[j].isNameUnderlined == true) ? underline : normal));
                         }
 
 
@@ -1103,6 +1824,165 @@ namespace DocGOST
             for (int j = 0; j < 7; j++) specTable.AddCell(currentCell);
 
             specTable.WriteSelectedRows(0, 2, 20 * mm_A4, 292 * mm_A4, cb);
+        }
+
+        private void DrawVedomostTable(Document doc, PdfWriter wr, int pagesCount, int tempNumber)
+        {
+            float rowsHeight;
+
+            if (pagesCount == 0) rowsHeight = 8.25f;
+            else rowsHeight = 8.448f;
+
+            PdfContentByte cb = wr.DirectContent;
+            float mm_A3 = doc.PageSize.Width / 420;
+
+            BaseFont fontGostA = BaseFont.CreateFont("GOST_A.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            Font normal = new Font(fontGostA, 12f, Font.ITALIC, BaseColor.BLACK);
+            Font header = new Font(fontGostA, 14f, Font.ITALIC, BaseColor.BLACK);
+            Font underline = new Font(fontGostA, 14f, Font.UNDERLINE | Font.ITALIC, BaseColor.BLACK);
+
+            //Размеры в соответствии с формой 5 Приложения А ГОСТ 2.106-96
+
+            #region Заполнение заголовков таблицы
+            PdfPTable headerTable = new PdfPTable(8);
+            headerTable.TotalWidth = 395 * mm_A3;
+            headerTable.LockedWidth = true;
+            float[] tbldWidths = new float[8];
+            tbldWidths[0] = 7;
+            tbldWidths[1] = 60;
+            tbldWidths[2] = 45;
+            tbldWidths[3] = 70;
+            tbldWidths[4] = 55;
+            tbldWidths[5] = 70;
+            tbldWidths[6] = 64;
+            tbldWidths[7] = 24;
+            headerTable.SetWidths(tbldWidths);
+
+            // Заполнение заголовков:
+            PdfPCell currentCell = new PdfPCell(new Phrase("№ строки", header));
+            currentCell.BorderWidth = 0.5f;
+            currentCell.HasFixedHeight();
+            currentCell.Rotation = 90;
+            currentCell.Padding = 0;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 27 * mm_A3;
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Наименование", header);
+            currentCell.Rotation = 0;
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Код" + Environment.NewLine + "продукции", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Обозначение" + Environment.NewLine + "документа на" + Environment.NewLine + "поставку", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Поставщик", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Куда входит" + Environment.NewLine + "(обозначение)", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase(String.Empty, header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("Приме-" + Environment.NewLine + "чание", header);
+            headerTable.AddCell(currentCell);
+
+            headerTable.WriteSelectedRows(0, 1, 20 * mm_A3, 292 * mm_A3, cb);
+
+            //Добавляем заголовок "Количество"
+            headerTable = new PdfPTable(1);
+            headerTable.TotalWidth = 64 * mm_A3;
+            headerTable.LockedWidth = true;
+            tbldWidths = new float[1];
+            tbldWidths[0] = 64;
+            headerTable.SetWidths(tbldWidths);
+            currentCell.Phrase = new Phrase("Количество", header);
+            currentCell.FixedHeight = 9 * mm_A3;
+            headerTable.AddCell(currentCell);
+            headerTable.WriteSelectedRows(0, 1, 327 * mm_A3, 292 * mm_A3, cb);
+
+            //Добавляем заголовки разных типов "Количества"
+            headerTable = new PdfPTable(4);
+            headerTable.TotalWidth = 64 * mm_A3;
+            headerTable.LockedWidth = true;
+            tbldWidths = new float[4];
+            tbldWidths[0] = 16;
+            tbldWidths[1] = 16;
+            tbldWidths[2] = 16;
+            tbldWidths[3] = 16;
+            headerTable.SetWidths(tbldWidths);
+            currentCell.FixedHeight = 18 * mm_A3;
+            currentCell.Phrase = new Phrase("на из- делие", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("в ком- плекты", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("на ре- гулир.", header);
+            headerTable.AddCell(currentCell);
+            currentCell.Phrase = new Phrase("всего", header);
+            headerTable.AddCell(currentCell);
+            headerTable.WriteSelectedRows(0, 1, 327 * mm_A3, 283 * mm_A3, cb);
+            #endregion
+
+            #region Заполнение граф таблицы
+            PdfPTable vedomostTable = new PdfPTable(11);
+            vedomostTable.TotalWidth = 395 * mm_A3;
+            vedomostTable.LockedWidth = true;
+            tbldWidths = new float[11];
+            tbldWidths[0] = 7;
+            tbldWidths[1] = 60;
+            tbldWidths[2] = 45;
+            tbldWidths[3] = 70;
+            tbldWidths[4] = 55;
+            tbldWidths[5] = 70;
+            tbldWidths[6] = 16;
+            tbldWidths[7] = 16;
+            tbldWidths[8] = 16;
+            tbldWidths[9] = 16;
+            tbldWidths[10] = 24;
+            vedomostTable.SetWidths(tbldWidths);
+
+            int startIndex = vedomost_first_page_rows_count * (pagesCount == 0 ? 0 : 1) + vedomost_subseq_page_rows_count * (pagesCount > 1 ? pagesCount - 1 : 0); //номер первой строки на странице из общего кол-ва строк
+            int rowsCount = (pagesCount == 0) ? vedomost_first_page_rows_count : vedomost_subseq_page_rows_count;            
+            int numberOfValidStrings = project.GetVedomostLength(tempNumber);
+            List<VedomostItem> vData = new List<VedomostItem>();
+            
+            for (int i = 1; i <= numberOfValidStrings; i++)
+            {
+                vData.Add(project.GetVedomostItem(i, tempNumber));
+            }
+
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+
+            for (int j = startIndex; j < startIndex + rowsCount; j++)
+            {
+                for (int i = 0; i < 11; i++)
+                {
+                    if (j >= numberOfValidStrings) currentCell.Phrase = new Phrase(String.Empty);
+                    else if (i == 0) currentCell.Phrase = new Phrase((j - startIndex + 1).ToString(), normal);
+                    else if (i == 1)
+                    {
+                        currentCell.Phrase = new Phrase(" ", normal);
+                        currentCell.Phrase.Add(new Phrase(vData[j].name, (vData[j].isNameUnderlined == true) ? underline : normal));
+
+                    }
+                    else if (i == 2) currentCell.Phrase = new Phrase(' ' + vData[j].kod, normal);
+                    else if (i == 3) currentCell.Phrase = new Phrase(vData[j].docum, normal);
+                    else if (i == 4) currentCell.Phrase = new Phrase(vData[j].supplier, normal);
+                    else if (i == 5) currentCell.Phrase = new Phrase(vData[j].belongs, normal);
+                    else if (i == 6) currentCell.Phrase = new Phrase(vData[j].quantityIzdelie, normal);
+                    else if (i == 7) currentCell.Phrase = new Phrase(vData[j].quantityComplects, normal);
+                    else if (i == 8) currentCell.Phrase = new Phrase(vData[j].quantityRegul, normal);
+                    else if (i == 9) currentCell.Phrase = new Phrase(vData[j].quantityTotal, normal);
+                    else if (i == 10) currentCell.Phrase = new Phrase(vData[j].note, normal);else currentCell.Phrase = new Phrase(String.Empty, normal);
+                    currentCell.FixedHeight = rowsHeight * mm_A3;
+
+                    //Для графы "Наименование" устанавливаем выравниванеие по левому краю:
+                    if (i == 1) currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    else currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+
+                    vedomostTable.AddCell(currentCell);
+                }
+            }
+            vedomostTable.WriteSelectedRows(0, rowsCount + 1, 20 * mm_A3, 265 * mm_A3, cb);
+            #endregion
+                       
         }
 
         private void DrawListRegistrTable(Document doc, PdfWriter wr)

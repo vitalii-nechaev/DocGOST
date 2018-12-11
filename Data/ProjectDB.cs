@@ -329,9 +329,9 @@ namespace DocGOST.Data
             osnNadpisItem.vedomostValue = "Ведомость покупных изделий";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "2";
-            osnNadpisItem.perechenValue = "АБВГ.ХХХХХХ.ХХХ";
-            osnNadpisItem.specificationValue = osnNadpisItem.perechenValue;
-            osnNadpisItem.vedomostValue = osnNadpisItem.perechenValue;
+            osnNadpisItem.specificationValue = "АБВГ.ХХХХХХ.ХХХ";
+            osnNadpisItem.perechenValue = osnNadpisItem.specificationValue + " ПЭ3";
+            osnNadpisItem.vedomostValue = osnNadpisItem.specificationValue + " ВП";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "3";
             osnNadpisItem.perechenValue = String.Empty;
@@ -387,10 +387,15 @@ namespace DocGOST.Data
             osnNadpisItem.grapha = "24";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "25";
+            osnNadpisItem.perechenValue = "АБВГ.ХХХХХХ.ХХХ"; //Для перечня здесь указываем спецификацию
+            osnNadpisItem.vedomostValue = "АБВГ.ХХХХХХ.ХХХ"; //Для ведомости здесь указываем спецификацию
+            osnNadpisItem.specificationValue = String.Empty;
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "32";
-            SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.perechenValue = "А4";
+            osnNadpisItem.vedomostValue = "А3";
+            osnNadpisItem.specificationValue = "А4";
+            SaveOsnNadpisItem(osnNadpisItem);            
         }
 
         #endregion       

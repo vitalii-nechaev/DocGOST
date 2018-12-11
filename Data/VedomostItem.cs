@@ -18,6 +18,7 @@
  * 
  */
 
+using System;
 using SQLite;
 
 namespace DocGOST.Data
@@ -34,11 +35,30 @@ namespace DocGOST.Data
         public string belongs { get; set; } // Куда входит        
         public string quantityIzdelie { get; set; } // Количество на изделие
         public string quantityComplects { get; set; } // Количество в комплекты
+        public string quantityRegul { get; set; } // Количество в комплекты
         public string quantityTotal { get; set; } // Количество, всего
         public string note { get; set; } //Примечание
         public string group { get; set; } // Название группы компонента в ед.ч.
         public string groupPlural { get; set; } //Название группы компонента во мн.ч. 
         //Оформление текста
         public bool isNameUnderlined { get; set; } //Подчёркивание наименования
+
+        public void makeEmpty()
+        {
+            this.designator = String.Empty;
+            this.name = String.Empty;
+            this.kod = String.Empty;
+            this.docum = String.Empty;
+            this.supplier = String.Empty;
+            this.belongs = String.Empty;
+            this.quantityIzdelie = String.Empty;
+            this.quantityComplects = String.Empty;
+            this.quantityRegul = String.Empty;
+            this.quantityTotal = String.Empty;
+            this.group = String.Empty;
+            this.groupPlural = String.Empty;
+            this.note = String.Empty;
+            this.isNameUnderlined = false;
+        }
     }
 }
