@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="ДокГОСТ версия 0.51" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" >
+        Title="ДокГОСТ версия 0.52" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" >
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
@@ -46,6 +46,10 @@
 
             <MenuItem Header="Редактирование">
                 <MenuItem x:Name="osnNadpisMenuItem" Header="Основная надпись" IsEnabled="False" Click="osnNadpisButton_Click" />
+            </MenuItem>
+
+            <MenuItem Header="Справка">
+                <MenuItem x:Name="helpMenuItem" Header="Справка" Click="helpMenuItem_Click" />
             </MenuItem>
         </Menu>
         <Grid Grid.Column="0" Grid.Row="1" >

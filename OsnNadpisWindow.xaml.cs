@@ -69,7 +69,9 @@ namespace DocGOST
             gr22SpecTextBox.Text = project.GetOsnNadpisItem("22").specificationValue;
             gr22PerechenTextBox.Text = project.GetOsnNadpisItem("22").perechenValue;
             gr24TextBox.Text = project.GetOsnNadpisItem("24").perechenValue;
-            gr25TextBox.Text = project.GetOsnNadpisItem("25").perechenValue;
+            gr25SpecTextBox.Text = project.GetOsnNadpisItem("25").specificationValue;
+            gr25PerechenTextBox.Text = project.GetOsnNadpisItem("25").perechenValue;
+            gr25VedomostTextBox.Text = project.GetOsnNadpisItem("25").vedomostValue;
             gr32TextBox.Text = project.GetOsnNadpisItem("32").perechenValue;
 
         }
@@ -209,9 +211,9 @@ namespace DocGOST
             osnNadpisItem.vedomostValue = gr24TextBox.Text;
             project.SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "25";
-            osnNadpisItem.specificationValue = gr25TextBox.Text;
-            osnNadpisItem.perechenValue = gr2TextBox.Text; //Для перечня здесь указываем спецификацию
-            osnNadpisItem.vedomostValue = gr2TextBox.Text; //Для ведомости здесь указываем спецификацию
+            osnNadpisItem.specificationValue = gr25SpecTextBox.Text;
+            osnNadpisItem.perechenValue = gr25PerechenTextBox.Text;
+            osnNadpisItem.vedomostValue = gr25VedomostTextBox.Text;
             project.SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "32";
             osnNadpisItem.specificationValue = "А4";

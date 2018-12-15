@@ -1410,5 +1410,11 @@ namespace DocGOST
         {
             Application.Current.Shutdown();
         }
+
+        /// <summary> Открытие справки </summary>
+        private void helpMenuItem_Click (object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://www.электроника-и-программирование.рф/docgost/");
+        }
     }
 }
