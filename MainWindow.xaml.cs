@@ -596,9 +596,9 @@ namespace DocGOST
                     List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
                     List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
 
-                    perechenListSorted = perechenList.OrderBy(x => x.designator).ToList();
-                    specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => x.designator).ToList();
-                    vedomostListSorted = vedomostList.OrderBy(x => x.designator).ToList();
+                    perechenListSorted = perechenList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+                    specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+                    vedomostListSorted = vedomostList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
 
                     for (int i = 0; i < specOtherListSorted.Count; i++)
                     {
@@ -614,6 +614,27 @@ namespace DocGOST
                     groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
                 }
             }
+        }
+
+        /// <summary> Формирование числа типа int для правильной сортировки позиционных обозначений,
+        /// так как в случае простой сортировки по алфавиту результат неправильный, например,
+        /// сортируется C1, C15, C2 вместо C1, C2< C15.<</summary>
+        private int MakeDesignatorForOrdering(string designator)
+        {
+            int result = 0;
+            if (designator.Length>1)
+            {
+                if (Char.IsDigit(designator[1]))
+                {
+                    result = ((designator[0])<<24) + (int.Parse(designator.Substring(1,designator.Length - 1))<<8);
+                }
+                else
+                {
+                    result = ((designator[0]) << 24) + (int.Parse(designator.Substring(2, designator.Length - 2)) << 8) + designator[1];
+                }
+            }
+                       
+            return result;
         }
 
         /// <summary> Чтение строк вида ='Str1'+'Str2' при чтении данных из проекта Altium Designer (.PrjPcb) </summary>
