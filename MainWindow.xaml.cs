@@ -328,6 +328,7 @@ namespace DocGOST
                             string schStr = String.Empty;
 
                             bool isNoBom = false;
+                            bool isFirstPartOfComponent = false;
                             bool isComponent = false;
 
                             while ((schStr = schReader.ReadLine()) != null)
@@ -339,6 +340,10 @@ namespace DocGOST
                                     {
                                         if (schStrArray[i].Length >= 23)
                                             if (schStrArray[i].Substring(0, 23) == "COMPONENTKINDVERSION2=5") isNoBom = true;
+
+                                        if (schStrArray[i].Length >= 15) 
+                                            if (schStrArray[i].Substring(0, 14) == "CURRENTPARTID=")
+                                                if ((schStrArray[i].Substring(0, 15) != "CURRENTPARTID=1") | (schStrArray[i].Length > 15)) isFirstPartOfComponent = false;
 
                                         if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
                                             if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
@@ -354,7 +359,7 @@ namespace DocGOST
                                         if (schStrArray[i].Length >= 8)
                                             if ((schStrArray[i].Substring(0, 7) == "HEADER=") |((schStrArray[i].Substring(0, 8) == "RECORD=1")&(schStrArray[i].Length==8))) //Считаем, что описание каждого компонента заканчивается этой фразой
                                             {
-                                                if ((isNoBom == false) & (componentPropList.Count > 0))
+                                                if ((isNoBom == false) & (componentPropList.Count > 0) & (isFirstPartOfComponent==true))
                                                 {
                                                     componentsList.Add(componentPropList);
                                                     
@@ -363,6 +368,7 @@ namespace DocGOST
 
                                                 isNoBom = false;
                                                 isComponent = false;
+                                                isFirstPartOfComponent = true;
 
                                                 componentPropList = new List<ComponentProperties>();
                                             }
@@ -449,9 +455,11 @@ namespace DocGOST
                 importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
                 if (propNames.Contains("Note")) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == "Note");
                 else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
-
+                
                 if (importPcbPrjWindow.ShowDialog() == true)
                 {
+                    
+                    
                     #region Заполнение списков для базы данных проекта
                     createPdfMenuItem.IsEnabled = true;
 
@@ -569,7 +577,8 @@ namespace DocGOST
                         {
                             DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
 
-                          if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
+                            if (tempPerechen.designator.Length>=2)
+                            if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
                             {
                                 tempPerechen.group = desDescr.Group.Substring(0, 1).ToUpper() + desDescr.Group.Substring(1, desDescr.Group.Length - 1).ToLower();
                                 tempPerechen.groupPlural = desDescr.GroupPlural.Substring(0, 1).ToUpper() + desDescr.GroupPlural.Substring(1, desDescr.GroupPlural.Length - 1).ToLower();
@@ -612,13 +621,15 @@ namespace DocGOST
                     redoMenuItem.IsEnabled = true;
                     #endregion
                     groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
+
+                    //waitGrid.Visibility = Visibility.Hidden;
                 }
             }
         }
 
         /// <summary> Формирование числа типа int для правильной сортировки позиционных обозначений,
         /// так как в случае простой сортировки по алфавиту результат неправильный, например,
-        /// сортируется C1, C15, C2 вместо C1, C2< C15.<</summary>
+        /// сортируется C1, C15, C2 вместо C1, C2, C15.<</summary>
         private int MakeDesignatorForOrdering(string designator)
         {
             int result = 0;
@@ -626,11 +637,11 @@ namespace DocGOST
             {
                 if (Char.IsDigit(designator[1]))
                 {
-                    result = ((designator[0])<<24) + (int.Parse(designator.Substring(1,designator.Length - 1))<<8);
+                    result = ((designator[0])<<24) + int.Parse(designator.Substring(1,designator.Length - 1));
                 }
                 else
                 {
-                    result = ((designator[0]) << 24) + (int.Parse(designator.Substring(2, designator.Length - 2)) << 8) + designator[1];
+                    result = ((designator[0]) << 24) + (designator[1]<<16)+int.Parse(designator.Substring(2, designator.Length - 2));
                 }
             }
                        
@@ -1276,7 +1287,7 @@ namespace DocGOST
             Button b = sender as Button;
 
             // Создаём список элементов ведомости, хранящийся в оперативной памяти для ускорения работы программы:
-            int vedomostLength = project.GetVedomostLength(perTempSave.GetCurrent());
+            int vedomostLength = project.GetVedomostLength(vedomostTempSave.GetCurrent());
             List<VedomostItem> tempVedomostList = new List<VedomostItem>(vedomostLength);
 
             for (int i = 1; i <= vedomostLength; i++)

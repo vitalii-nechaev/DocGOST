@@ -31,8 +31,7 @@ namespace DocGOST
         public EditVedomostItemWindow(string projectPath, int strNum, int currentSave, int nextSave)
         {
             InitializeComponent();
-
-
+            
             project = new ProjectDB(projectPath);
 
             vedomostItem = new VedomostItem();
@@ -45,6 +44,7 @@ namespace DocGOST
             kodTextBox.Text = vedomostItem.kod;
             documTextBox.Text = vedomostItem.docum;
             supplierTextBox.Text = vedomostItem.supplier;
+            quantityIzdelieTextBox.Text = vedomostItem.quantityIzdelie;
             isNameUnderlinedCheckBox.IsChecked = vedomostItem.isNameUnderlined;
         }
 
@@ -57,12 +57,15 @@ namespace DocGOST
                 (kodTextBox.Text != vedomostItem.kod) |
                 (documTextBox.Text != vedomostItem.docum) |
                 (supplierTextBox.Text != vedomostItem.supplier) |
+                (quantityIzdelieTextBox.Text != vedomostItem.quantityIzdelie) |
                 ((bool)isNameUnderlinedCheckBox.IsChecked != vedomostItem.isNameUnderlined))
             {
                 vedomostItem.name = nameTextBox.Text;
                 vedomostItem.kod = kodTextBox.Text;
                 vedomostItem.docum = documTextBox.Text;
                 vedomostItem.supplier = supplierTextBox.Text;
+                vedomostItem.quantityIzdelie = quantityIzdelieTextBox.Text;
+                vedomostItem.quantityTotal = vedomostItem.quantityIzdelie;
                 vedomostItem.isNameUnderlined = (bool)isNameUnderlinedCheckBox.IsChecked;
 
                 project.AddVedomostItem(vedomostItem);

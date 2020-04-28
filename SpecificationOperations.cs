@@ -133,7 +133,7 @@ namespace DocGOST
             
             #region Разбиение каждой записи на нужное количество строк
             List<SpecificationItem> tempList2 = new List<SpecificationItem>();
-            const int maxNameLength = 35;
+            const int maxNameLength = 36;
             const int maxNoteLength = 13;
             //Удаление лишних строк
             for (int i = 0; i < numberOfValidStrings; i++)

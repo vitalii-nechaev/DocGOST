@@ -34,6 +34,8 @@
         <TextBox x:Name="documTextBox" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5,11"/>
         <Label Grid.Row="3" Grid.Column="0" Content="Поставщик " HorizontalAlignment="Right" VerticalAlignment="Center" Grid.ColumnSpan="2" Margin="0,7"/>
         <TextBox x:Name="supplierTextBox" Grid.Row="3" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5,11"/>
+        <Label Grid.Row="4" Grid.Column="0" Content="Количество " HorizontalAlignment="Right" VerticalAlignment="Center" Grid.ColumnSpan="2" Margin="0,7"/>
+        <TextBox x:Name="quantityIzdelieTextBox" Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5,11"/>
         <CheckBox x:Name="isNameUnderlinedCheckBox" Grid.Row="10" Grid.ColumnSpan="3" VerticalAlignment="Center" HorizontalAlignment="Center" Content="Подчеркнуть наименование" Margin="58,12"/>
         <WrapPanel Grid.Row="11" Grid.ColumnSpan="3" HorizontalAlignment="Center" Margin="46,15,46,0">
             <Button IsDefault="True" Click="Accept_Click" MinWidth="80" Margin="0,0,20,0">Сохранить</Button>

@@ -82,7 +82,7 @@ namespace DocGOST
                 }
             }
             #endregion
-
+            
             #region Группировка элементов перечня по типу и документу           
 
 
