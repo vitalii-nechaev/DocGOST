@@ -44,8 +44,11 @@ namespace DocGOST
             kodTextBox.Text = vedomostItem.kod;
             documTextBox.Text = vedomostItem.docum;
             supplierTextBox.Text = vedomostItem.supplier;
+            supplierRefTextBox.Text = vedomostItem.supplierRef;
             quantityIzdelieTextBox.Text = vedomostItem.quantityIzdelie;
-            isNameUnderlinedCheckBox.IsChecked = vedomostItem.isNameUnderlined;
+            quantityRegulTextBox.Text = vedomostItem.quantityRegul;
+            noteTextBox.Text = vedomostItem.note;
+            isNameUnderlinedCheckBox.IsChecked = vedomostItem.isNameUnderlined;            
         }
 
         VedomostItem vedomostItem;
@@ -57,15 +60,40 @@ namespace DocGOST
                 (kodTextBox.Text != vedomostItem.kod) |
                 (documTextBox.Text != vedomostItem.docum) |
                 (supplierTextBox.Text != vedomostItem.supplier) |
+                (supplierRefTextBox.Text != vedomostItem.supplierRef) |
                 (quantityIzdelieTextBox.Text != vedomostItem.quantityIzdelie) |
+                (quantityRegulTextBox.Text != vedomostItem.quantityRegul) |
+                (noteTextBox.Text != vedomostItem.note) |
                 ((bool)isNameUnderlinedCheckBox.IsChecked != vedomostItem.isNameUnderlined))
             {
                 vedomostItem.name = nameTextBox.Text;
                 vedomostItem.kod = kodTextBox.Text;
                 vedomostItem.docum = documTextBox.Text;
                 vedomostItem.supplier = supplierTextBox.Text;
+                vedomostItem.supplierRef = supplierRefTextBox.Text;
+                vedomostItem.note = noteTextBox.Text;
+
+                int quantityIzdelie=-1;
+
+                while (quantityIzdelie<0)
+                {
+                    if (quantityIzdelieTextBox.Text == string.Empty) quantityIzdelie = 0;
+                    else if (int.TryParse(quantityIzdelieTextBox.Text, out quantityIzdelie) == false) quantityIzdelieTextBox.Text = vedomostItem.quantityIzdelie;
+                }
                 vedomostItem.quantityIzdelie = quantityIzdelieTextBox.Text;
-                vedomostItem.quantityTotal = vedomostItem.quantityIzdelie;
+
+                int quantityRegul = -1;
+
+                while (quantityRegul < 0)
+                {
+                    if (quantityRegulTextBox.Text == string.Empty) quantityRegul = 0;
+                    else if (int.TryParse(quantityRegulTextBox.Text, out quantityRegul) == false) quantityRegulTextBox.Text = vedomostItem.quantityRegul;
+                }
+                vedomostItem.quantityRegul = quantityRegulTextBox.Text;
+                
+
+                vedomostItem.quantityTotal = (quantityIzdelie + quantityRegul).ToString();
+                                
                 vedomostItem.isNameUnderlined = (bool)isNameUnderlinedCheckBox.IsChecked;
 
                 project.AddVedomostItem(vedomostItem);

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="ДокГОСТ версия 0.54" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
+        Title="ДокГОСТ версия 0.55" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
@@ -13,17 +13,19 @@
         <KeyBinding Key="N" Modifiers="Ctrl" Command="ApplicationCommands.New"/>
         <KeyBinding Key="F4" Modifiers="Alt" Command="ApplicationCommands.Close"/>
     </Window.InputBindings>
-    <Grid>              
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
             <RowDefinition Height="*" MinHeight="50"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="52*"/>
+            <ColumnDefinition Width="43*"/>
+            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="210*"/>
             <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="200*"/>
+            <ColumnDefinition Width="1006*"/>
         </Grid.ColumnDefinitions>
-        <Menu Height="20" VerticalAlignment="Top" Grid.ColumnSpan="4">
+        <Menu Height="20" VerticalAlignment="Top" Grid.ColumnSpan="5">
             <MenuItem Header="Файл">
                 <MenuItem x:Name="createProjectMenuItem" Header="Создать проект" Click="CreateProject_Click" InputGestureText="Ctrl+N"></MenuItem>
                 <MenuItem x:Name="openProjectMenuItem" Header="Открыть проект" Click="OpenProject_Click" InputGestureText="Ctrl+O"></MenuItem>
@@ -52,7 +54,7 @@
                 <MenuItem x:Name="helpMenuItem" Header="Справка" Click="helpMenuItem_Click" />
             </MenuItem>
         </Menu>
-        <Grid Grid.Column="0" Grid.Row="1" >
+        <Grid Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="100"/>
                 <RowDefinition Height="5"/>
@@ -74,8 +76,8 @@
             </StackPanel>
         </Grid>
 
-        <GridSplitter Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" ResizeDirection="Columns" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <Grid Grid.ColumnSpan="2"  Grid.Column="2" Grid.Row="1" Margin="5,0,5,5">
+        <GridSplitter Grid.Row="1" Grid.Column="3" ResizeDirection="Columns" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <Grid  Grid.Column="4" Grid.Row="1" Margin="5,0,5,5">
 
             <ListView x:Name="perechenListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
                 <ListView.Resources>
@@ -88,15 +90,15 @@
                 </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn x:Name="designatorPerechenColumn" Header="Поз. обозначение" DisplayMemberBinding="{Binding designator}" Width="120"/>                        
+                        <GridViewColumn x:Name="designatorPerechenColumn" Header="Поз. обозначение" DisplayMemberBinding="{Binding designator}" Width="120"/>
                         <GridViewColumn x:Name="namePerechenColumn" Header="Наименование" Width="410">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
                                         <TextBlock x:Name="namePerechenTextBlock" Background="Transparent" Text="{Binding name}"/>
                                         <TextBox BorderBrush="Black" BorderThickness="0,0,0,1" Width="{Binding Width, ElementName=namePerechenTextBlock}" Background="Transparent" Visibility="{Binding isNameUnderlined, Converter={StaticResource BoolToVisConverter}}"/>
-                                    </Grid>                               
-                                   
+                                    </Grid>
+
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -142,7 +144,7 @@
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.View>
-                    <GridView>                        
+                    <GridView>
                         <GridViewColumn x:Name="nameVedomostColumn" Header="Наименование" Width="272">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -629,6 +631,6 @@
                 </TabItem>
             </TabControl>
         </Grid>
-       
+
     </Grid>
 </Window>

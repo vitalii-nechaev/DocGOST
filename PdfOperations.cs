@@ -1306,7 +1306,7 @@ namespace DocGOST
             string gr11aText = String.Empty;
             if (docType == DocType.Specification) gr11aText = project.GetOsnNadpisItem("11a").specificationValue;
             if (docType == DocType.Perechen) gr11aText = project.GetOsnNadpisItem("11a").perechenValue;
-            if (docType == DocType.Vedomost) gr1aText = project.GetOsnNadpisItem("11a").vedomostValue;
+            if (docType == DocType.Vedomost) gr11aText = project.GetOsnNadpisItem("11a").vedomostValue;
             currentCell.Phrase = new Phrase(gr11aText, normal);
             table10_13.AddCell(currentCell);
             currentCell.Phrase = new Phrase(String.Empty, normal);
@@ -1888,7 +1888,7 @@ namespace DocGOST
             PdfContentByte cb = wr.DirectContent;
             float mm_A3 = doc.PageSize.Width / 420;
 
-            BaseFont fontGostA = BaseFont.CreateFont("GOST_A.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            BaseFont fontGostA = BaseFont.CreateFont("GOST_A.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);            
             Font normal = new Font(fontGostA, 12f, Font.ITALIC, BaseColor.BLACK);
             Font header = new Font(fontGostA, 14f, Font.ITALIC, BaseColor.BLACK);
             Font underline = new Font(fontGostA, 14f, Font.UNDERLINE | Font.ITALIC, BaseColor.BLACK);
@@ -2016,19 +2016,29 @@ namespace DocGOST
                     }
                     else if (i == 2) currentCell.Phrase = new Phrase(' ' + vData[j].kod, normal);
                     else if (i == 3) currentCell.Phrase = new Phrase(vData[j].docum, normal);
-                    else if (i == 4) currentCell.Phrase = new Phrase(vData[j].supplier, normal);
+                    else if (i == 4)
+                    {
+                        Anchor anchor = new Anchor(vData[j].supplier, normal);
+                        if (vData[j].supplierRef != string.Empty) anchor.Reference = vData[j].supplierRef;
+                        currentCell.Phrase = anchor;
+                    }                            
                     else if (i == 5) currentCell.Phrase = new Phrase(vData[j].belongs, normal);
                     else if (i == 6) currentCell.Phrase = new Phrase(vData[j].quantityIzdelie, normal);
                     else if (i == 7) currentCell.Phrase = new Phrase(vData[j].quantityComplects, normal);
                     else if (i == 8) currentCell.Phrase = new Phrase(vData[j].quantityRegul, normal);
                     else if (i == 9) currentCell.Phrase = new Phrase(vData[j].quantityTotal, normal);
-                    else if (i == 10) currentCell.Phrase = new Phrase(vData[j].note, normal); else currentCell.Phrase = new Phrase(String.Empty, normal);
+                    else if (i == 10) currentCell.Phrase = new Phrase(vData[j].note, normal);
+                    else currentCell.Phrase = new Phrase(String.Empty, normal);
                     currentCell.FixedHeight = rowsHeight * mm_A3;
 
+                    
+                    
+                    
                     //Для графы "Наименование" устанавливаем выравниванеие по левому краю:
                     if (i == 1) currentCell.HorizontalAlignment = Element.ALIGN_LEFT;
                     else currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
 
+                   
                     vedomostTable.AddCell(currentCell);
                 }
             }

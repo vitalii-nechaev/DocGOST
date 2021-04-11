@@ -74,6 +74,40 @@ namespace DocGOST
             gr25VedomostTextBox.Text = project.GetOsnNadpisItem("25").vedomostValue;
             gr32TextBox.Text = project.GetOsnNadpisItem("32").perechenValue;
 
+            string perechenType = project.GetOsnNadpisItem("2").perechenValue;
+            if (perechenType.Length >= 3)
+                perechenType = perechenType.Substring(perechenType.Length - 3, 3);
+            else perechenType = "ПЭ3";
+
+            switch (perechenType)
+            {
+                case "ПЭ1":
+                    PerechenTypeComboBox.SelectedIndex = 0;
+                    break;
+                case "ПЭ2":
+                    PerechenTypeComboBox.SelectedIndex = 1;
+                    break;
+                case "ПЭ3":
+                    PerechenTypeComboBox.SelectedIndex = 2;
+                    break;
+                case "ПЭ4":
+                    PerechenTypeComboBox.SelectedIndex = 3;
+                    break;
+                case "ПЭ5":
+                    PerechenTypeComboBox.SelectedIndex = 4;
+                    break;
+                case "ПЭ6":
+                    PerechenTypeComboBox.SelectedIndex = 5;
+                    break;
+                case "ПЭ7":
+                    PerechenTypeComboBox.SelectedIndex = 6;
+                    break;
+                case "ПЭ0":
+                    PerechenTypeComboBox.SelectedIndex = 7;
+                    break;
+
+            }
+
         }
 
         private void Accept_Click(object sender, RoutedEventArgs e)
@@ -95,9 +129,39 @@ namespace DocGOST
             osnNadpisItem.perechenValue = "Перечень элементов";
             osnNadpisItem.vedomostValue = "Ведомость покупных изделий";
             project.SaveOsnNadpisItem(osnNadpisItem);
+
+            string perechenType = "ПЭ3";
+            switch (PerechenTypeComboBox.SelectedIndex)
+            {
+                case 0:
+                    perechenType = " ПЭ1";
+                    break;
+                case 1:
+                    perechenType = " ПЭ2";
+                    break;
+                case 2:
+                    perechenType = " ПЭ3";
+                    break;
+                case 3:
+                    perechenType = " ПЭ4";
+                    break;
+                case 4:
+                    perechenType = " ПЭ5";
+                    break;
+                case 5:
+                    perechenType = " ПЭ6";
+                    break;
+                case 6:
+                    perechenType = " ПЭ7";
+                    break;
+                case 7:
+                    perechenType = " ПЭ0";
+                    break;
+            }
+
             osnNadpisItem.grapha = "2";
             osnNadpisItem.specificationValue = gr2TextBox.Text;
-            osnNadpisItem.perechenValue = gr2TextBox.Text + " ПЭ3";
+            osnNadpisItem.perechenValue = gr2TextBox.Text + perechenType;
             osnNadpisItem.vedomostValue = gr2TextBox.Text + " ВП";
             project.SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "3";

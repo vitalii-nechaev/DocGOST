@@ -84,7 +84,7 @@ namespace DocGOST
             CommandBinding closeBinding = new CommandBinding(ApplicationCommands.Close);
             closeBinding.Executed += ExitMenuItem_Click;
             this.CommandBindings.Add(closeBinding);
-            
+
         }
 
         string projectPath;
@@ -145,6 +145,8 @@ namespace DocGOST
                 importMenuItem.IsEnabled = true;
                 osnNadpisMenuItem.IsEnabled = true;
                 osnNadpisButton.IsEnabled = true;
+
+                CreateEmptyProject();
             }
 
         }
@@ -184,7 +186,7 @@ namespace DocGOST
             {
 
                 MessageBoxResult closingDialogResult = MessageBoxResult.No;
-                if ((perTempSave != null) & (specTempSave != null)&(vedomostTempSave != null))
+                if ((perTempSave != null) & (specTempSave != null) & (vedomostTempSave != null))
                 {
                     if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
                     (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
@@ -195,7 +197,7 @@ namespace DocGOST
                     }
                     project.DeleteTempData();
                 }
-                   
+
 
                 if (closingDialogResult != MessageBoxResult.Cancel)
                 {
@@ -262,7 +264,7 @@ namespace DocGOST
                         project.AddVedomostItem(vedomostItem);
                     }
                     vedomostTempSave.ProjectSaved();
-                                        
+
                     DisplayAllValues();
 
                     importMenuItem.IsEnabled = true;
@@ -272,11 +274,119 @@ namespace DocGOST
                     createPdfMenuItem.IsEnabled = true;
                     osnNadpisMenuItem.IsEnabled = true;
                     osnNadpisButton.IsEnabled = true;
-                }                
+                }
             }
         }
 
-        /// <summary> Импорт данных из проекта Altium Designer (.PrjPcb) </summary>
+        private void CreateEmptyProject()
+        {
+            perTempSave = new TempSaves();
+            specTempSave = new TempSaves();
+            vedomostTempSave = new TempSaves();
+
+            String prjStr;
+
+            int numberOfStrings = 0;
+
+            List<List<ComponentProperties>> componentsList = new List<List<ComponentProperties>>();
+            List<ComponentProperties> componentPropList = new List<ComponentProperties>();
+
+            List<ComponentProperties> otherPropList = new List<ComponentProperties>();
+
+            createPdfMenuItem.IsEnabled = true;
+
+            List<PerechenItem> perechenList = new List<PerechenItem>();
+            List<SpecificationItem> specList = new List<SpecificationItem>();
+            List<VedomostItem> vedomostList = new List<VedomostItem>();
+
+            int numberOfValidStrings = 0;
+
+            SpecificationItem tempSpecItem = new SpecificationItem();
+            numberOfValidStrings++;
+            tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+            tempSpecItem.name = String.Empty;
+            tempSpecItem.quantity = String.Empty;
+            tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+            specList.Add(tempSpecItem);
+             
+
+            PerechenItem tempPerechen = new PerechenItem();
+            SpecificationItem tempSpecification = new SpecificationItem();
+            VedomostItem tempVedomost = new VedomostItem();
+
+            numberOfValidStrings++;
+            tempPerechen.id = id.makeID(numberOfValidStrings, perTempSave.GetCurrent());
+            tempPerechen.designator = string.Empty;
+            tempPerechen.name = string.Empty;
+            tempPerechen.quantity = String.Empty;
+            tempPerechen.note = String.Empty;
+            tempPerechen.docum = String.Empty;
+            tempPerechen.type = String.Empty;
+            tempPerechen.group = String.Empty;
+            tempPerechen.groupPlural = String.Empty;
+            tempPerechen.isNameUnderlined = false;
+
+            tempSpecification.id = tempPerechen.id;
+            tempSpecification.spSection = (int)Global.SpSections.Other;
+            tempSpecification.format = String.Empty;
+            tempSpecification.zona = String.Empty;
+            tempSpecification.position = String.Empty;
+            tempSpecification.oboznachenie = String.Empty;
+            tempSpecification.name = tempPerechen.name;
+            tempSpecification.quantity = String.Empty;
+            tempSpecification.note = tempPerechen.designator;
+            tempSpecification.group = String.Empty;
+            tempSpecification.docum = tempPerechen.docum;
+            tempSpecification.designator = tempPerechen.designator;
+            tempSpecification.isNameUnderlined = false;
+
+            tempVedomost.id = tempPerechen.id;
+            tempVedomost.designator = tempPerechen.designator;
+            tempVedomost.name = tempPerechen.name;
+            tempVedomost.kod = String.Empty;
+            tempVedomost.docum = tempPerechen.docum;
+            tempVedomost.supplier = String.Empty;
+            tempVedomost.belongs = String.Empty;
+            tempVedomost.quantityIzdelie = String.Empty;
+            tempVedomost.quantityComplects = String.Empty;
+            tempVedomost.quantityTotal = String.Empty;
+            tempVedomost.note = String.Empty;
+            tempVedomost.isNameUnderlined = false;
+
+            string group = string.Empty;
+
+            tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
+
+            perechenList.Add(tempPerechen);
+            specList.Add(tempSpecification);
+            vedomostList.Add(tempVedomost);
+
+
+
+            //Сортировка по поз. обозначению
+            List<PerechenItem> perechenListSorted = new List<PerechenItem>();
+            List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
+            List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
+
+            
+            specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+            vedomostListSorted = vedomostList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+            
+            perechenList[0].id = id.makeID(1, perTempSave.GetCurrent());
+            specOtherListSorted[0].id = id.makeID(1 + (numberOfValidStrings - specOtherListSorted.Count), specTempSave.GetCurrent());
+            vedomostListSorted[0].id = id.makeID(1, vedomostTempSave.GetCurrent());
+            
+
+            saveProjectMenuItem.IsEnabled = true;
+            undoMenuItem.IsEnabled = true;
+            redoMenuItem.IsEnabled = true;
+            
+            groupByName(perechenList, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
+
+            //waitGrid.Visibility = Visibility.Hidden;
+
+        }
+
         private void ImportPrjPcbfromAD_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openDlg = new OpenFileDialog();
@@ -285,299 +395,315 @@ namespace DocGOST
             openDlg.Filter = "Файлы проекта AD (*.PrjPcb)|*.PrjPcb";
             if (openDlg.ShowDialog() == true)
             {
-                perTempSave = new TempSaves();
-                specTempSave = new TempSaves();
-                vedomostTempSave = new TempSaves();
 
-                #region Открытие и парсинг файла проекта Altium
+
+
                 string pcbPrjFilePath = openDlg.FileName;
-                string pcbPrjFolderPath = Path.GetDirectoryName(pcbPrjFilePath);
 
-                //Открываем файл проекта AD для поиска имён файлов схемы:
-                FileStream pcbPrjFile = new FileStream(pcbPrjFilePath, FileMode.Open, FileAccess.Read);
-                StreamReader pcbPrjReader = new StreamReader(pcbPrjFile, System.Text.Encoding.Default);
+                ImportPrjPcbfromAD(pcbPrjFilePath);
+            }
 
-                String prjStr;
+        }
 
-                int numberOfStrings = 0;
+        /// <summary> Импорт данных из проекта Altium Designer (.PrjPcb) </summary>
+        private void ImportPrjPcbfromAD(string pcbPrjFilePath)
+        {
 
-                List<List<ComponentProperties>> componentsList = new List<List<ComponentProperties>>();
-                List<ComponentProperties> componentPropList = new List<ComponentProperties>();
 
-                List<ComponentProperties> otherPropList = new List<ComponentProperties>();
+            perTempSave = new TempSaves();
+            specTempSave = new TempSaves();
+            vedomostTempSave = new TempSaves();
 
-                SpecificationItem plataSpecItem = new SpecificationItem(); //для хранения записи печатной платы для добавления в раздел "Детали" спецификации
+            #region Открытие и парсинг файла проекта Altium
 
-                plataSpecItem.position = "Авто";               
-                plataSpecItem.name = "Плата печатная";                
-                plataSpecItem.quantity = "1";
-                plataSpecItem.spSection = (int)Global.SpSections.Details;
+            string pcbPrjFolderPath = Path.GetDirectoryName(pcbPrjFilePath);
 
-                while ((prjStr = pcbPrjReader.ReadLine()) != null)
-                {
-                    string schPath = String.Empty;
-                    if (prjStr.Length > 13)
-                        if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "SchDoc"))
+            //Открываем файл проекта AD для поиска имён файлов схемы:
+            FileStream pcbPrjFile = new FileStream(pcbPrjFilePath, FileMode.Open, FileAccess.Read);
+            StreamReader pcbPrjReader = new StreamReader(pcbPrjFile, System.Text.Encoding.Default);
+
+            String prjStr;
+
+            int numberOfStrings = 0;
+
+            List<List<ComponentProperties>> componentsList = new List<List<ComponentProperties>>();
+            List<ComponentProperties> componentPropList = new List<ComponentProperties>();
+
+            List<ComponentProperties> otherPropList = new List<ComponentProperties>();
+
+            SpecificationItem plataSpecItem = new SpecificationItem(); //для хранения записи печатной платы для добавления в раздел "Детали" спецификации
+
+            plataSpecItem.position = "Авто";
+            plataSpecItem.name = "Плата печатная";
+            plataSpecItem.quantity = "1";
+            plataSpecItem.spSection = (int)Global.SpSections.Details;
+
+            while ((prjStr = pcbPrjReader.ReadLine()) != null)
+            {
+                string schPath = String.Empty;
+                if (prjStr.Length > 13)
+                    if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "SchDoc"))
+                    {
+                        schPath = Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
+
+                        //Открываем файл схемы AD для получения списка параметров электронных компонентов:
+                        FileStream schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+                        StreamReader schReader = new StreamReader(schFile, System.Text.Encoding.Default);
+
+                        string schStr = String.Empty;
+
+                        bool isNoBom = false;
+                        bool isFirstPartOfComponent = false;
+                        bool isComponent = false;
+
+                        while ((schStr = schReader.ReadLine()) != null)
                         {
-                            schPath = Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
-
-                            //Открываем файл схемы AD для получения списка параметров электронных компонентов:
-                            FileStream schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
-                            StreamReader schReader = new StreamReader(schFile, System.Text.Encoding.Default);
-
-                            string schStr = String.Empty;
-
-                            bool isNoBom = false;
-                            bool isFirstPartOfComponent = false;
-                            bool isComponent = false;
-
-                            while ((schStr = schReader.ReadLine()) != null)
+                            string[] schStrArray = schStr.Split(new Char[] { '|' });
+                            for (int i = 0; i < schStrArray.Length - 1; i++)
                             {
-                                string[] schStrArray = schStr.Split(new Char[] { '|' });
-                                for (int i = 0; i < schStrArray.Length - 1; i++)
-                                {                                    
-                                    if (isComponent == true)
-                                    {
-                                        if (schStrArray[i].Length >= 23)
-                                            if (schStrArray[i].Substring(0, 23) == "COMPONENTKINDVERSION2=5") isNoBom = true;
+                                if (isComponent == true)
+                                {
+                                    if (schStrArray[i].Length >= 23)
+                                        if (schStrArray[i].Substring(0, 23) == "COMPONENTKINDVERSION2=5") isNoBom = true;
 
-                                        if (schStrArray[i].Length >= 15) 
-                                            if (schStrArray[i].Substring(0, 14) == "CURRENTPARTID=")
-                                                if ((schStrArray[i].Substring(0, 15) != "CURRENTPARTID=1") | (schStrArray[i].Length > 15)) isFirstPartOfComponent = false;
+                                    if (schStrArray[i].Length >= 15)
+                                        if (schStrArray[i].Substring(0, 14) == "CURRENTPARTID=")
+                                            if ((schStrArray[i].Substring(0, 15) != "CURRENTPARTID=1") | (schStrArray[i].Length > 15)) isFirstPartOfComponent = false;
 
-                                        if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
-                                            if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
-                                            {
-                                                ComponentProperties prop = new ComponentProperties();
-                                                prop.Name = schStrArray[i + 1].Substring(5);
-                                                prop.Text = schStrArray[i].Substring(5);
-                                                if (isNoBom == false)
+                                    if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
+                                        if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                        {
+                                            ComponentProperties prop = new ComponentProperties();
+                                            prop.Name = schStrArray[i + 1].Substring(5);
+                                            prop.Text = schStrArray[i].Substring(5);
+                                            if (isNoBom == false)
                                                 //if ((prop.Name == "Designator") | (prop.Name == "SType") | (prop.Name == "Docum") | (prop.Name == "Note"))
                                                 componentPropList.Add(prop);
-                                            }
+                                        }
 
-                                        if (schStrArray[i].Length >= 8)
-                                            if ((schStrArray[i].Substring(0, 7) == "HEADER=") |((schStrArray[i].Substring(0, 8) == "RECORD=1")&(schStrArray[i].Length==8))) //Считаем, что описание каждого компонента заканчивается этой фразой
+                                    if (schStrArray[i].Length >= 8)
+                                        if ((schStrArray[i].Substring(0, 7) == "HEADER=") | ((schStrArray[i].Substring(0, 8) == "RECORD=1") & (schStrArray[i].Length == 8))) //Считаем, что описание каждого компонента заканчивается этой фразой
+                                        {
+                                            if ((isNoBom == false) & (componentPropList.Count > 0) & (isFirstPartOfComponent == true))
                                             {
-                                                if ((isNoBom == false) & (componentPropList.Count > 0) & (isFirstPartOfComponent==true))
-                                                {
-                                                    componentsList.Add(componentPropList);
-                                                    
-                                                    numberOfStrings++;
-                                                }
+                                                componentsList.Add(componentPropList);
 
-                                                isNoBom = false;
-                                                isComponent = false;
-                                                isFirstPartOfComponent = true;
-
-                                                componentPropList = new List<ComponentProperties>();
+                                                numberOfStrings++;
                                             }
-                                    }
-                                    else if (isComponent == false)
-                                    {
-                                        //Запись полей основной надписи в базу данных проекта, если они встречаются в файле Sch:
-                                        if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
-                                            if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
-                                            {
-                                                ComponentProperties prop = new ComponentProperties();
-                                                prop.Name = schStrArray[i + 1].Substring(5);
-                                                prop.Text = schStrArray[i].Substring(5);
 
-                                                otherPropList.Add(prop);
-                                            }
-                                    }
-                                    //Теперь ищем все записи компонента и сохраняем их
-                                    if (schStrArray[i].Length == 8)
-                                        if (schStrArray[i].Substring(0, 8) == "RECORD=1") //Считаем, что описание каждого компонента начинается этой фразой
-                                            isComponent = true;
+                                            isNoBom = false;
+                                            isComponent = false;
+                                            isFirstPartOfComponent = true;
+
+                                            componentPropList = new List<ComponentProperties>();
+                                        }
                                 }
-                            }
+                                else if (isComponent == false)
+                                {
+                                    //Запись полей основной надписи в базу данных проекта, если они встречаются в файле Sch:
+                                    if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
+                                        if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                        {
+                                            ComponentProperties prop = new ComponentProperties();
+                                            prop.Name = schStrArray[i + 1].Substring(5);
+                                            prop.Text = schStrArray[i].Substring(5);
 
-                            //Работа с составными именами типа ='prop1'+'prop2'
-                            for (int i = 0; i < otherPropList.Count; i++)
-                            {
-                                otherPropList[i].Text = MakeComplexStringIfItIs(otherPropList[i].Text, otherPropList);
+                                            otherPropList.Add(prop);
+                                        }
+                                }
+                                //Теперь ищем все записи компонента и сохраняем их
+                                if (schStrArray[i].Length == 8)
+                                    if (schStrArray[i].Substring(0, 8) == "RECORD=1") //Считаем, что описание каждого компонента начинается этой фразой
+                                        isComponent = true;
                             }
-
-                            schFile.Close();
                         }
-                        else if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "PcbDoc"))
+
+                        //Работа с составными именами типа ='prop1'+'prop2'
+                        for (int i = 0; i < otherPropList.Count; i++)
                         {
-                            //Добавляем плату в спецификацию ВРЕМЕННО! в раздел "Детали"                            
-                            plataSpecItem.oboznachenie = prjStr.Substring(13, prjStr.Length - 20);
-                            plataSpecItem.oboznachenie = plataSpecItem.oboznachenie.Split(new char[] { '\\' }).Last();
-                            plataSpecItem.name = "Плата печатная";                            
-
+                            otherPropList[i].Text = MakeComplexStringIfItIs(otherPropList[i].Text, otherPropList);
                         }
 
+                        schFile.Close();
+                    }
+                    else if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "PcbDoc"))
+                    {
+                        //Добавляем плату в спецификацию ВРЕМЕННО! в раздел "Детали"                            
+                        plataSpecItem.oboznachenie = prjStr.Substring(13, prjStr.Length - 20);
+                        plataSpecItem.oboznachenie = plataSpecItem.oboznachenie.Split(new char[] { '\\' }).Last();
+                        plataSpecItem.name = "Плата печатная";
+
+                    }
+
+            }
+
+            pcbPrjFile.Close();
+            #endregion
+
+
+
+            //Записываем в новый список названия всех свойств компонентов
+            List<string> propNames = new List<string>();
+            propNames.Add("<Не задано>");
+
+            for (int i = 0; i < numberOfStrings; i++)
+            {
+                for (int j = 0; j < (componentsList[i]).Count; j++)
+                {
+                    string name = componentsList[i][j].Name;
+                    if (propNames.Contains(name) == false) propNames.Add(name);
                 }
+            }
 
-                pcbPrjFile.Close();
-                #endregion
+            ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
+
+            importPcbPrjWindow.designatorComboBox.ItemsSource = propNames;
+            if (propNames.Contains("Designator")) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == "Designator");
+            else
+            {
+                importPcbPrjWindow.designatorComboBox.SelectedIndex = 0;
+                importPcbPrjWindow.nextButton.IsEnabled = false;
+                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+            }
+            importPcbPrjWindow.nameComboBox.ItemsSource = propNames;
+            if (propNames.Contains("SType")) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == "SType");
+            else
+            {
+                importPcbPrjWindow.nameComboBox.SelectedIndex = 0;
+                importPcbPrjWindow.nextButton.IsEnabled = false;
+                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+            }
+
+            importPcbPrjWindow.documComboBox.ItemsSource = propNames;
+            if (propNames.Contains("Docum")) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == "Docum");
+            else importPcbPrjWindow.documComboBox.SelectedIndex = 0;
+            importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
+            if (propNames.Contains("Note")) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == "Note");
+            else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
+
+            if (importPcbPrjWindow.ShowDialog() == true)
+            {
 
 
+                #region Заполнение списков для базы данных проекта
+                createPdfMenuItem.IsEnabled = true;
 
-                //Записываем в новый список названия всех свойств компонентов
-                List<string> propNames = new List<string>();
-                propNames.Add("<Не задано>");
+                List<PerechenItem> perechenList = new List<PerechenItem>();
+                List<SpecificationItem> specList = new List<SpecificationItem>();
+                List<VedomostItem> vedomostList = new List<VedomostItem>();
+
+                int numberOfValidStrings = 0;
+
+                SpecificationItem tempSpecItem = new SpecificationItem();
+                numberOfValidStrings++;
+                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                tempSpecItem.name = "Схема электрическая принципиальная";
+                tempSpecItem.quantity = String.Empty;
+                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                specList.Add(tempSpecItem);
+
+                tempSpecItem = new SpecificationItem();
+                numberOfValidStrings++;
+                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                tempSpecItem.name = "Перечень элементов";
+                tempSpecItem.quantity = String.Empty;
+                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                specList.Add(tempSpecItem);
+
+                tempSpecItem = new SpecificationItem();
+                numberOfValidStrings++;
+                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                tempSpecItem.name = "Ведомость покупных изделий";
+                tempSpecItem.quantity = String.Empty;
+                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                specList.Add(tempSpecItem);
+
+                numberOfValidStrings++;
+                plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                specList.Add(plataSpecItem);
+
 
                 for (int i = 0; i < numberOfStrings; i++)
                 {
+                    PerechenItem tempPerechen = new PerechenItem();
+                    SpecificationItem tempSpecification = new SpecificationItem();
+                    VedomostItem tempVedomost = new VedomostItem();
+
+                    numberOfValidStrings++;
+                    tempPerechen.id = id.makeID(numberOfValidStrings, perTempSave.GetCurrent());
+                    tempPerechen.designator = string.Empty;
+                    tempPerechen.name = string.Empty;
+                    tempPerechen.quantity = "1";
+                    
+                    tempPerechen.docum = string.Empty;
+                    tempPerechen.type = string.Empty;
+                    tempPerechen.group = string.Empty;
+                    tempPerechen.groupPlural = string.Empty;
+                    tempPerechen.isNameUnderlined = false;
+                    tempPerechen.note = string.Empty;
+
+                    string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
+                    string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
+                    string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
+                    string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
+
                     for (int j = 0; j < (componentsList[i]).Count; j++)
-                    {
-                        string name = componentsList[i][j].Name;
-                        if (propNames.Contains(name) == false) propNames.Add(name);
-                    }
-                }
-
-                ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
-
-                importPcbPrjWindow.designatorComboBox.ItemsSource = propNames;
-                if (propNames.Contains("Designator")) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == "Designator");
-                else
-                {
-                    importPcbPrjWindow.designatorComboBox.SelectedIndex = 0;
-                    importPcbPrjWindow.nextButton.IsEnabled = false;
-                    importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
-                }
-                importPcbPrjWindow.nameComboBox.ItemsSource = propNames;
-                if (propNames.Contains("SType")) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == "SType");
-                else
-                {
-                    importPcbPrjWindow.nameComboBox.SelectedIndex = 0;
-                    importPcbPrjWindow.nextButton.IsEnabled = false;
-                    importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
-                }
-
-                importPcbPrjWindow.documComboBox.ItemsSource = propNames;
-                if (propNames.Contains("Docum")) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == "Docum");
-                else importPcbPrjWindow.documComboBox.SelectedIndex = 0;
-                importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
-                if (propNames.Contains("Note")) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == "Note");
-                else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
-                
-                if (importPcbPrjWindow.ShowDialog() == true)
-                {
-                    
-                    
-                    #region Заполнение списков для базы данных проекта
-                    createPdfMenuItem.IsEnabled = true;
-
-                    List<PerechenItem> perechenList = new List<PerechenItem>();
-                    List<SpecificationItem> specList = new List<SpecificationItem>();
-                    List<VedomostItem> vedomostList = new List<VedomostItem>();
-
-                    int numberOfValidStrings = 0;
-
-                    SpecificationItem tempSpecItem = new SpecificationItem();
-                    numberOfValidStrings++;
-                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                    tempSpecItem.name = "Схема электрическая принципиальная";
-                    tempSpecItem.quantity = String.Empty;
-                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                    specList.Add(tempSpecItem);
-
-                    tempSpecItem = new SpecificationItem();
-                    numberOfValidStrings++;
-                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                    tempSpecItem.name = "Перечень элементов";
-                    tempSpecItem.quantity = String.Empty;
-                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                    specList.Add(tempSpecItem);
-
-                    tempSpecItem = new SpecificationItem();
-                    numberOfValidStrings++;
-                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                    tempSpecItem.name = "Ведомость покупных изделий";
-                    tempSpecItem.quantity = String.Empty;
-                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                    specList.Add(tempSpecItem);
-
-                    numberOfValidStrings++;
-                    plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                    specList.Add(plataSpecItem);
-
-
-                    for (int i = 0; i < numberOfStrings; i++)
-                    {
-                        PerechenItem tempPerechen = new PerechenItem();
-                        SpecificationItem tempSpecification = new SpecificationItem();
-                        VedomostItem tempVedomost = new VedomostItem();
-
-                        numberOfValidStrings++;
-                        tempPerechen.id = id.makeID(numberOfValidStrings, perTempSave.GetCurrent());
-                        tempPerechen.designator = string.Empty;
-                        tempPerechen.name = string.Empty;
-                        tempPerechen.quantity = "1";
-                        tempPerechen.note = String.Empty;
-                        tempPerechen.docum = String.Empty;
-                        tempPerechen.type = String.Empty;
-                        tempPerechen.group = String.Empty;
-                        tempPerechen.groupPlural = String.Empty;
-                        tempPerechen.isNameUnderlined = false;
-                        
-                        for (int j = 0; j < (componentsList[i]).Count; j++)
+                    {  
+                        ComponentProperties prop;
+                        try
                         {
-                            ComponentProperties prop;
-                            try
-                            {
-                                prop = (componentsList[i])[j];
+                            prop = (componentsList[i])[j];
 
-                                string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
-                                string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
-                                string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
-                                string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
-
-                                if (prop.Name == designatorName) tempPerechen.designator = prop.Text;
-                                else if (prop.Name == nameName) tempPerechen.name = prop.Text;
-                                else if (prop.Name == documName) tempPerechen.docum = prop.Text;
-                                else if (prop.Name == noteName) tempPerechen.note = prop.Text;
-                            }
-                            catch
-                            {
-                                MessageBox.Show(j.ToString() + "/" + ((componentsList[i]).Capacity - 1).ToString() + ' ' + i.ToString() + "/" + numberOfStrings);
-                            }
-
-
+                            if (prop.Name == designatorName) tempPerechen.designator = prop.Text;
+                            else if (prop.Name == nameName) tempPerechen.name = prop.Text;
+                            else if (prop.Name == documName) tempPerechen.docum = prop.Text;
+                            else if (prop.Name == noteName) tempPerechen.note = prop.Text;
                         }
-
-                        tempSpecification.id = tempPerechen.id;
-                        tempSpecification.spSection = (int)Global.SpSections.Other;
-                        tempSpecification.format = String.Empty;
-                        tempSpecification.zona = String.Empty;
-                        tempSpecification.position = String.Empty;
-                        tempSpecification.oboznachenie = String.Empty;
-                        tempSpecification.name = tempPerechen.name;
-                        tempSpecification.quantity = "1";
-                        tempSpecification.note = tempPerechen.designator;
-                        tempSpecification.group = String.Empty;
-                        tempSpecification.docum = tempPerechen.docum;
-                        tempSpecification.designator = tempPerechen.designator;
-                        tempSpecification.isNameUnderlined = false;
-
-                        tempVedomost.id = tempPerechen.id;
-                        tempVedomost.designator = tempPerechen.designator;
-                        tempVedomost.name = tempPerechen.name;
-                        tempVedomost.kod = String.Empty;
-                        tempVedomost.docum = tempPerechen.docum;
-                        tempVedomost.supplier = String.Empty;
-                        tempVedomost.belongs = String.Empty;
-                        tempVedomost.quantityIzdelie = "1";
-                        tempVedomost.quantityComplects = String.Empty;
-                        tempVedomost.quantityTotal = "1";
-                        tempVedomost.note = String.Empty;
-                        tempVedomost.isNameUnderlined = false;
-
-                        string group = string.Empty;
-
-                        DesignatorDB designDB = new DesignatorDB();
-                        int descrDBLength = designDB.GetLength();
-
-                        for (int j = 0; j < descrDBLength; j++)
+                        catch
                         {
-                            DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
+                            MessageBox.Show(j.ToString() + "/" + ((componentsList[i]).Capacity - 1).ToString() + ' ' + i.ToString() + "/" + numberOfStrings);
+                        }
+                    }
+                     
 
-                            if (tempPerechen.designator.Length>=2)
+                    tempSpecification.id = tempPerechen.id;
+                    tempSpecification.spSection = (int)Global.SpSections.Other;
+                    tempSpecification.format = String.Empty;
+                    tempSpecification.zona = String.Empty;
+                    tempSpecification.position = String.Empty;
+                    tempSpecification.oboznachenie = String.Empty;
+                    tempSpecification.name = tempPerechen.name;
+                    tempSpecification.quantity = "1";
+                    tempSpecification.note = tempPerechen.designator;
+                    tempSpecification.group = String.Empty;
+                    tempSpecification.docum = tempPerechen.docum;
+                    tempSpecification.designator = tempPerechen.designator;
+                    tempSpecification.isNameUnderlined = false;
+
+                    tempVedomost.id = tempPerechen.id;
+                    tempVedomost.designator = tempPerechen.designator;
+                    tempVedomost.name = tempPerechen.name;
+                    tempVedomost.kod = String.Empty;
+                    tempVedomost.docum = tempPerechen.docum;
+                    tempVedomost.supplier = String.Empty;
+                    tempVedomost.belongs = String.Empty;
+                    tempVedomost.quantityIzdelie = "1";
+                    tempVedomost.quantityComplects = String.Empty;
+                    tempVedomost.quantityTotal = "1";
+                    tempVedomost.note = tempPerechen.note;
+
+                    tempVedomost.isNameUnderlined = false;
+
+                    string group = string.Empty;
+
+                    DesignatorDB designDB = new DesignatorDB();
+                    int descrDBLength = designDB.GetLength();
+
+                    for (int j = 0; j < descrDBLength; j++)
+                    {
+                        DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
+
+                        if (tempPerechen.designator.Length >= 2)
                             if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
                             {
                                 tempPerechen.group = desDescr.Group.Substring(0, 1).ToUpper() + desDescr.Group.Substring(1, desDescr.Group.Length - 1).ToLower();
@@ -589,42 +715,42 @@ namespace DocGOST
                                 tempVedomost.group = group;
                                 tempVedomost.groupPlural = tempPerechen.groupPlural;
                             }
-                        }
-
-
-                        tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
-
-                        perechenList.Add(tempPerechen);
-                        specList.Add(tempSpecification);
-                        vedomostList.Add(tempVedomost);
-
                     }
 
-                    //Сортировка по поз. обозначению
-                    List<PerechenItem> perechenListSorted = new List<PerechenItem>();
-                    List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
-                    List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
 
-                    perechenListSorted = perechenList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
-                    specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
-                    vedomostListSorted = vedomostList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+                    tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
 
-                    for (int i = 0; i < specOtherListSorted.Count; i++)
-                    {
-                        perechenListSorted[i].id = id.makeID(i + 1, perTempSave.GetCurrent());
-                        specOtherListSorted[i].id = id.makeID(i + 1 + (numberOfValidStrings - specOtherListSorted.Count), specTempSave.GetCurrent());
-                        vedomostListSorted[i].id = id.makeID(i + 1, vedomostTempSave.GetCurrent());
-                    }
+                    perechenList.Add(tempPerechen);
+                    specList.Add(tempSpecification);
+                    vedomostList.Add(tempVedomost);
 
-                    saveProjectMenuItem.IsEnabled = true;
-                    undoMenuItem.IsEnabled = true;
-                    redoMenuItem.IsEnabled = true;
-                    #endregion
-                    groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
-
-                    //waitGrid.Visibility = Visibility.Hidden;
                 }
+
+                //Сортировка по поз. обозначению
+                List<PerechenItem> perechenListSorted = new List<PerechenItem>();
+                List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
+                List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
+
+                perechenListSorted = perechenList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+                specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+                vedomostListSorted = vedomostList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
+
+                for (int i = 0; i < specOtherListSorted.Count; i++)
+                {
+                    perechenListSorted[i].id = id.makeID(i + 1, perTempSave.GetCurrent());
+                    specOtherListSorted[i].id = id.makeID(i + 1 + (numberOfValidStrings - specOtherListSorted.Count), specTempSave.GetCurrent());
+                    vedomostListSorted[i].id = id.makeID(i + 1, vedomostTempSave.GetCurrent());
+                }
+
+                saveProjectMenuItem.IsEnabled = true;
+                undoMenuItem.IsEnabled = true;
+                redoMenuItem.IsEnabled = true;
+                #endregion
+                groupByName(perechenListSorted, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
+
+                //waitGrid.Visibility = Visibility.Hidden;
             }
+
         }
 
         /// <summary> Формирование числа типа int для правильной сортировки позиционных обозначений,
@@ -633,18 +759,18 @@ namespace DocGOST
         private int MakeDesignatorForOrdering(string designator)
         {
             int result = 0;
-            if (designator.Length>1)
+            if (designator.Length > 1)
             {
                 if (Char.IsDigit(designator[1]))
                 {
-                    result = ((designator[0])<<24) + int.Parse(designator.Substring(1,designator.Length - 1));
+                    result = ((designator[0]) << 24) + int.Parse(designator.Substring(1, designator.Length - 1));
                 }
                 else
                 {
-                    result = ((designator[0]) << 24) + (designator[1]<<16)+int.Parse(designator.Substring(2, designator.Length - 2));
+                    result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(2, designator.Length - 2));
                 }
             }
-                       
+
             return result;
         }
 
@@ -685,7 +811,7 @@ namespace DocGOST
         private void DisplayAllValues()
         {
             //Вывод данных перечня в окно программы:
-            int length = project.GetPerechenLength(perTempSave.GetCurrent());            
+            int length = project.GetPerechenLength(perTempSave.GetCurrent());
             List<PerechenItem> resultPer = new List<PerechenItem>(length);
 
             for (int i = 1; i <= length; i++)
@@ -705,7 +831,7 @@ namespace DocGOST
             }
 
             DisplaySpecValues(resultSpec);
-            
+
             //Вывод данных ведомости в окно программы:
             length = project.GetVedomostLength(vedomostTempSave.GetCurrent());
             List<VedomostItem> resultVedomost = new List<VedomostItem>(length);
@@ -738,19 +864,19 @@ namespace DocGOST
             }
             else
             {
-                
+
                 //Заполнение раздела "Документация"
-                
-                List<SpecificationItem> documRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Documentation)).ToList();               
+
+                List<SpecificationItem> documRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Documentation)).ToList();
                 documSpecListView.ItemsSource = documRazdelList;
 
                 //Заполнение раздела "Комплексы"
-                 List<SpecificationItem> compleksiRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Compleksi)).ToList();                
+                List<SpecificationItem> compleksiRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Compleksi)).ToList();
                 compleksiSpecListView.ItemsSource = compleksiRazdelList;
 
                 //Заполнение раздела "Сборочные единицы"
                 List<SpecificationItem> sborEdRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.SborEd)).ToList();
-               sborEdSpecListView.ItemsSource = sborEdRazdelList;
+                sborEdSpecListView.ItemsSource = sborEdRazdelList;
 
                 //Заполнение раздела "Детали"
                 List<SpecificationItem> detailsRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Details)).ToList();
@@ -763,7 +889,7 @@ namespace DocGOST
                 //Заполнение раздела "Прочие"
                 List<SpecificationItem> otherRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Other)).ToList();
                 otherRazdelList = sData.Where(x => x.spSection == (int)Global.SpSections.Other).ToList();
-               otherSpecListView.ItemsSource = otherRazdelList;
+                otherSpecListView.ItemsSource = otherRazdelList;
 
                 //Заполнение раздела "Материалы"
                 List<SpecificationItem> materialsRazdelList = (sData.Where(x => x.spSection == (int)Global.SpSections.Materials)).ToList();
@@ -784,18 +910,18 @@ namespace DocGOST
         {
             //Вывод данных в окно программы: 
             perechenListView.ItemsSource = pData;
-            
+
             //Вставляем подчёркивания:
-           /* foreach (ListViewItem item in perechenListView.Items)
-            {
-                //if (item.Name)
-                TextBlock[] tb = new TextBlock[2];
-                tb[0].TextDecorations = TextDecorations.Underline;
-                tb[0].Text = "fdfdf";
-                tb[1].TextDecorations = TextDecorations.Underline;
-                tb[1].Text = "asdfasdf";
-                item.Content = tb;
-            }*/
+            /* foreach (ListViewItem item in perechenListView.Items)
+             {
+                 //if (item.Name)
+                 TextBlock[] tb = new TextBlock[2];
+                 tb[0].TextDecorations = TextDecorations.Underline;
+                 tb[0].Text = "fdfdf";
+                 tb[1].TextDecorations = TextDecorations.Underline;
+                 tb[1].Text = "asdfasdf";
+                 item.Content = tb;
+             }*/
         }
 
         /// <summary>
@@ -805,13 +931,13 @@ namespace DocGOST
         private void DisplayVedomostValues(List<VedomostItem> vData)
         {
             //Вывод данных в окно программы: 
-            vedomostListView.ItemsSource = vData;            
+            vedomostListView.ItemsSource = vData;
         }
 
         /// <summary> Создание PDF-файлов перечня и спецификации </summary>
         private void CreatePdf_Click(object sender, RoutedEventArgs e)
         {
-            string pdfPath = "ПЭ3.pdf";
+            string pdfPath = "ПЭ.pdf";
             PdfOperations pdf = new PdfOperations(projectPath);
             int startPage = (startFromSecondCheckBox.IsChecked == false) ? 1 : 2;
             bool addListRegistr = (addListRegistrCheckBox.IsChecked == true);
@@ -843,7 +969,7 @@ namespace DocGOST
                     if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent());
                 }
                 project.DeleteTempData();
-            }                
+            }
         }
 
         /// <summary> Группировка элементов перечня и спецификации, их запись в базу данных проекта и отображение пользователю </summary>
@@ -858,20 +984,22 @@ namespace DocGOST
             int numOfPerechenValidStrings = pData.Count;
             int numOfSpecificationStrings = sOtherData.Count;
             int numOfVedomostValidStrings = vData.Count;
-                        
 
-            (new PerechenOperations()).groupPerechenElements(ref pData, ref numOfPerechenValidStrings);
-            
-            sOtherData = (new SpecificationOperations()).groupSpecificationElements(sOtherData, ref numOfSpecificationStrings);
+            if (numOfPerechenValidStrings > 1)
+                (new PerechenOperations()).groupPerechenElements(ref pData, ref numOfPerechenValidStrings);
 
-            vData = (new VedomostOperations()).groupVedomostElements(vData, ref numOfVedomostValidStrings);
+            if (numOfSpecificationStrings > 1)
+                sOtherData = (new SpecificationOperations()).groupSpecificationElements(sOtherData, ref numOfSpecificationStrings);
+
+            if (numOfVedomostValidStrings > 1)
+                vData = (new VedomostOperations()).groupVedomostElements(vData, ref numOfVedomostValidStrings);
 
             //Запись значений в файл и вывод сгруппированных строк в окно программы:
 
             List<PerechenItem> perResult = new List<PerechenItem>(numOfPerechenValidStrings);
             List<SpecificationItem> specResult = new List<SpecificationItem>(numOfSpecificationStrings + sData.Count);
             List<VedomostItem> vedomostResult = new List<VedomostItem>(numOfVedomostValidStrings);
-            
+
             for (int i = 0; i < numOfPerechenValidStrings; i++)
             {
                 PerechenItem pd = pData[i];
@@ -901,7 +1029,7 @@ namespace DocGOST
 
             for (int i = 0; i < numOfVedomostValidStrings; i++)
             {
-                VedomostItem vd = vData[i];               
+                VedomostItem vd = vData[i];
                 vd.id = id.makeID(i + 1, perTempSave.GetCurrent());
                 vedomostResult.Add(vd);
                 project.AddVedomostItem(vd);
@@ -1126,11 +1254,11 @@ namespace DocGOST
         private int GetSpecNextNumInSection(Global.SpSections section)
         {
             int strNum = 1;
-            
+
             List<SpecificationItem> sData = project.GetSpecificationList(specTempSave.GetCurrent());
             for (int i = (int)Global.SpSections.Documentation; i <= (int)section; i++)
                 strNum += (sData.Where(x => x.spSection == i)).Count();
-           
+
             return strNum;
         }
 
@@ -1143,7 +1271,7 @@ namespace DocGOST
             int specSection = 0;
 
             Global.SpSections section;
-           
+
             if (b.Tag as string == "Документация")
             {
                 //Определяем номер добавляемой строки
@@ -1223,7 +1351,7 @@ namespace DocGOST
                 }
                 else if (i == strNum)
                 {
-                    specItem = new SpecificationItem();                    
+                    specItem = new SpecificationItem();
                     specItem.id = id.makeID(i, currentTempSave);
                     specItem.spSection = specSection;
                     specItem.zona = String.Empty;
@@ -1245,7 +1373,7 @@ namespace DocGOST
 
             DisplaySpecValues(specList);
         }
-        
+
         /// <summary> Удаление текущей строки спецификации </summary>
         private void SpecDelete_Click(object sender, RoutedEventArgs e)
         {
@@ -1318,7 +1446,7 @@ namespace DocGOST
 
                 DisplayVedomostValues(tempVedomostList);
             }
-    
+
         }
 
         /// <summary> Добавление к ведомости пустой строки сверху </summary>
@@ -1444,7 +1572,7 @@ namespace DocGOST
         }
 
         /// <summary> Открытие справки </summary>
-        private void helpMenuItem_Click (object sender, RoutedEventArgs e)
+        private void helpMenuItem_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start("http://www.электроника-и-программирование.рф/docgost/");
         }
