@@ -1,7 +1,7 @@
 ﻿/*
  *
  * This file is part of the DocGOST project.    
- * Copyright (C) 2018 Vitalii Nechaev.
+ * Copyright (C) 2023 Vitalii Nechaev.
  * 
  * This program is free software; you can redistribute it and/or modify it 
  * under the terms of the GNU Affero General Public License version 3 as 
@@ -18,17 +18,15 @@
  * 
  */
 
+using System;
 using SQLite;
 
 namespace DocGOST.Data
 {
-    class OsnNadpisItem
+    internal class ParameterItem
     {
         [PrimaryKey]
-        public string grapha { get; set; } // Номер графы
-        public string specificationValue { get; set; } // Значение для спецификации
-        public string perechenValue { get; set; } // Значение для перечня элементов 
-        public string vedomostValue { get; set; } // Значение для ведомости
-        public string pcbSpecificationValue { get; set; } // Значение для спецификации
+        public string name { get; set; } // Название параметра
+        public string value { get; set; } // Значение параметра
     }
 }

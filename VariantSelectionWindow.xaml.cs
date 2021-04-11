@@ -15,13 +15,20 @@ using System.Windows.Shapes;
 namespace DocGOST
 {
     /// <summary>
-    /// Interaction logic for WaitWindow.xaml
+    /// Interaction logic for VariantSelectionWindow.xaml
     /// </summary>
-    public partial class WaitWindow : Window
+    public partial class VariantSelectionWindow : Window
     {
-        public WaitWindow()
+        public VariantSelectionWindow(List<String> variantNamesList)
         {
             InitializeComponent();
+            variantSelectionComboBox.ItemsSource = variantNamesList;
+            variantSelectionComboBox.SelectedIndex = 0;
+        }
+
+        private void Accept_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = true;
         }
     }
 }

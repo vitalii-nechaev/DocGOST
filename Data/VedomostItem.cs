@@ -31,7 +31,8 @@ namespace DocGOST.Data
         public string name { get; set; } // Наименование
         public string kod { get; set; } // Код продукции
         public string docum { get; set; } // Документ на поставку
-        public string supplier { get; set; } // Постав
+        public string supplier { get; set; } // Поставщик
+        public string supplierRef { get; set; } // Гиперссылка на компонент у поставщика
         public string belongs { get; set; } // Куда входит        
         public string quantityIzdelie { get; set; } // Количество на изделие
         public string quantityComplects { get; set; } // Количество в комплекты
@@ -50,6 +51,7 @@ namespace DocGOST.Data
             this.kod = String.Empty;
             this.docum = String.Empty;
             this.supplier = String.Empty;
+            this.supplierRef = String.Empty;
             this.belongs = String.Empty;
             this.quantityIzdelie = String.Empty;
             this.quantityComplects = String.Empty;

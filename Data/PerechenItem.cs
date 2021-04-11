@@ -33,8 +33,9 @@ namespace DocGOST.Data
         public string docum { get; set; } // Документ на поставку
         public string type { get; set; } // Тип компонента
         public string group { get; set; } // Название группы компонента в ед.ч.
-        public string groupPlural { get; set; } //Название группы компонента во мн.ч.
+        public string groupPlural { get; set; } // Название группы компонента во мн.ч.
         //Оформление текста
-        public bool isNameUnderlined { get; set; } //Подчёркивание наименования
+        public bool isNameUnderlined { get; set; } // Подчёркивание наименования
+        public string page { get; set; } // Лист перечня, на котором расположена данная запись (заполняется в MainWindow.DisplayPerValues)
     }
 }

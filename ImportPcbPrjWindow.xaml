@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Параметры импорта" Height="284.443" Width="300">
+        Title="Параметры импорта" Height="280" Width="300">
     <Grid>
+        <Grid x:Name="propertiesGrid" Visibility="Hidden">
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition Height="40"/>
@@ -33,7 +34,104 @@
 
         <WrapPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
             <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
-            <Button x:Name="nextButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Accept_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>            
+            <Button x:Name="acceptButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_2_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>            
         </WrapPanel>
+        </Grid>
+        <Grid x:Name="variantsGrid" Visibility="Hidden">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+            
+            <Label Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                Выберите исполнение (Variant):
+            </Label>
+            <ComboBox Grid.Row="1" Grid.RowSpan="2" x:Name = "variantSelectionComboBox" HorizontalAlignment="Center" Width="260" VerticalAlignment="Center" Margin="0,30,0,0" />
+
+            <WrapPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
+                <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
+                <Button x:Name="nextButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_1_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
+            </WrapPanel>
+        </Grid>
+        <Grid x:Name="moduleDecimalNumberGrid" Visibility="Visible">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="35"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="15"/>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                Децимальный номер изделия:
+            </Label>
+
+            <RadioButton x:Name="paramPrjNumberRadioButton" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" GroupName="prjNumberRadioButtonGroup" Checked="prjNumberRadioButton_Checked" />
+
+            <Label Grid.Row="1" Grid.Column="1" Content="Параметр проекта" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>
+
+            <ComboBox Grid.Row="2" Grid.ColumnSpan="3" x:Name = "prjNumberSelectionComboBox" HorizontalAlignment="Center" Width="260" VerticalAlignment="Center" IsEnabled="False" SelectionChanged="prjNumberSelectionComboBox_SelectionChanged" />
+
+
+            <RadioButton x:Name="manualPrjNumberRadioButton" Grid.Row="4" HorizontalAlignment="Center" VerticalAlignment="Center" GroupName="prjNumberRadioButtonGroup" IsChecked="True" Checked="prjNumberRadioButton_Checked"/>
+
+            <Label Grid.Row="4" Grid.Column="1" Content="Ввести вручную" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>
+
+            <TextBox x:Name="prjNumberTextBox" Grid.Row="5" Grid.ColumnSpan="3" Height="20" Width="160" Text="АБВГ.ХХХХХХ.ХХХ" HorizontalContentAlignment="Center" FontWeight="Bold"/>
+
+            <WrapPanel Grid.Row="6" Grid.ColumnSpan="3" HorizontalAlignment="Center" Margin="0,15,0,0">
+                <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
+                <Button ToolTip = "Приступить к импорту данных"  Click="Next_3_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
+            </WrapPanel>
+        </Grid>
+        <Grid x:Name="pcbDecimalNumberGrid" Visibility="Hidden">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="35"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="33"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="15"/>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                Децимальный номер платы:
+            </Label>
+
+            <RadioButton x:Name="paramPcbNumberRadioButton" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" GroupName="pcbNumberRadioButtonGroup" Checked="pcbNumberRadioButton_Checked" />
+
+            <Label Grid.Row="1" Grid.Column="1" Content="Параметр проекта" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>
+
+            <ComboBox Grid.Row="2" Grid.ColumnSpan="3" x:Name = "pcbNumberSelectionComboBox" HorizontalAlignment="Center" Width="260" VerticalAlignment="Center" IsEnabled="False" SelectionChanged="pcbNumberSelectionComboBox_SelectionChanged" />
+
+
+            <RadioButton x:Name="manualPcbNumberRadioButton" Grid.Row="4" HorizontalAlignment="Center" VerticalAlignment="Center" GroupName="pcbNumberRadioButtonGroup" IsChecked="True" Checked="pcbNumberRadioButton_Checked"/>
+
+            <Label Grid.Row="4" Grid.Column="1" Content="Ввести вручную" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>
+
+            <TextBox x:Name="pcbNumberTextBox" Grid.Row="5" Grid.ColumnSpan="3" Height="20" Width="160" Text="АБВГ.6ХХХХХ.ХХХ" HorizontalContentAlignment="Center" FontWeight="Bold"/>
+
+            <WrapPanel Grid.Row="6" Grid.ColumnSpan="3" HorizontalAlignment="Center" Margin="0,15,0,0">
+                <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
+                <Button ToolTip = "Приступить к импорту данных"  Click="Accept_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
+            </WrapPanel>
+        </Grid>
     </Grid>
 </Window>

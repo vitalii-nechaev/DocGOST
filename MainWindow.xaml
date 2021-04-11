@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="ДокГОСТ версия 0.54" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
+        Title="ДокГОСТ версия 0.77" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
@@ -13,17 +13,19 @@
         <KeyBinding Key="N" Modifiers="Ctrl" Command="ApplicationCommands.New"/>
         <KeyBinding Key="F4" Modifiers="Alt" Command="ApplicationCommands.Close"/>
     </Window.InputBindings>
-    <Grid>              
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
             <RowDefinition Height="*" MinHeight="50"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="52*"/>
+            <ColumnDefinition Width="43*"/>
+            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="210*"/>
             <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="200*"/>
+            <ColumnDefinition Width="1006*"/>
         </Grid.ColumnDefinitions>
-        <Menu Height="20" VerticalAlignment="Top" Grid.ColumnSpan="4">
+        <Menu Height="20" VerticalAlignment="Top" Grid.ColumnSpan="5">
             <MenuItem Header="Файл">
                 <MenuItem x:Name="createProjectMenuItem" Header="Создать проект" Click="CreateProject_Click" InputGestureText="Ctrl+N"></MenuItem>
                 <MenuItem x:Name="openProjectMenuItem" Header="Открыть проект" Click="OpenProject_Click" InputGestureText="Ctrl+O"></MenuItem>
@@ -52,7 +54,7 @@
                 <MenuItem x:Name="helpMenuItem" Header="Справка" Click="helpMenuItem_Click" />
             </MenuItem>
         </Menu>
-        <Grid Grid.Column="0" Grid.Row="1" >
+        <Grid Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="100"/>
                 <RowDefinition Height="5"/>
@@ -74,8 +76,8 @@
             </StackPanel>
         </Grid>
 
-        <GridSplitter Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" ResizeDirection="Columns" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <Grid Grid.ColumnSpan="2"  Grid.Column="2" Grid.Row="1" Margin="5,0,5,5">
+        <GridSplitter Grid.Row="1" Grid.Column="3" ResizeDirection="Columns" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <Grid  Grid.Column="4" Grid.Row="1" Margin="5,0,5,5">
 
             <ListView x:Name="perechenListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
                 <ListView.Resources>
@@ -88,15 +90,24 @@
                 </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn x:Name="designatorPerechenColumn" Header="Поз. обозначение" DisplayMemberBinding="{Binding designator}" Width="120"/>                        
+                        <GridViewColumn x:Name="pageOfPerechenColumn" Header="Лист" Width="30">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <TextBlock x:Name="namePerechenTextBlock" Background="Transparent" Foreground="DarkGray" Text="{Binding page}"/>                                        
+                                    </Grid>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn x:Name="designatorPerechenColumn" Header="Поз. обозначение" DisplayMemberBinding="{Binding designator}" Width="120"/>
                         <GridViewColumn x:Name="namePerechenColumn" Header="Наименование" Width="410">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
                                         <TextBlock x:Name="namePerechenTextBlock" Background="Transparent" Text="{Binding name}"/>
                                         <TextBox BorderBrush="Black" BorderThickness="0,0,0,1" Width="{Binding Width, ElementName=namePerechenTextBlock}" Background="Transparent" Visibility="{Binding isNameUnderlined, Converter={StaticResource BoolToVisConverter}}"/>
-                                    </Grid>                               
-                                   
+                                    </Grid>
+
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -142,7 +153,7 @@
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.View>
-                    <GridView>                        
+                    <GridView>
                         <GridViewColumn x:Name="nameVedomostColumn" Header="Наименование" Width="272">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -628,7 +639,449 @@
                     </Grid>
                 </TabItem>
             </TabControl>
+            <TabControl x:Name="pcbSpecificationTabControl" Visibility="Hidden">
+                <TabItem Header="Документация">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="documPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Documentation" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Documentation" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Documentation" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Tag="Документация" Content="Добавить строку снизу в документацию" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Комплексы">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="compleksiPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Compleksi" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Compleksi" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Compleksi" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в комплексы" Tag="Комплексы" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Сборочные единицы">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="sborEdPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="SborEd" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="SborEd" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="SborEd" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в сборочные единицы" Tag="Сборочные единицы" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Детали">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="detailsPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Details" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Details" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Details" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в детали" Tag="Детали" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Стандартные изделия">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="standartPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Standard" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Standard" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Standard" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в стандартные изделия" Tag="Стандартные изделия" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Прочие изделия">
+                    <TabItem.Content>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="25"/>
+                            </Grid.RowDefinitions>
+                            <ListView Grid.Row="0" x:Name="otherPcbSpecListView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn x:Name="formatPcbSpecColumn" Header="Формат" DisplayMemberBinding="{Binding format}"/>
+                                        <GridViewColumn x:Name="zonaPcbSpecColumn" Header="Зона" DisplayMemberBinding="{Binding zona}"/>
+                                        <GridViewColumn x:Name="positionPcbSpecColumn" Header="Поз." DisplayMemberBinding="{Binding position}"/>
+                                        <GridViewColumn x:Name="oboznachPcbSpecColumn" Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}"/>
+                                        <GridViewColumn x:Name="namePcbSpecColumn" Header="Наименование" DisplayMemberBinding="{Binding name}"/>
+                                        <GridViewColumn x:Name="quantityPcbSpecColumn" Header="Кол." DisplayMemberBinding="{Binding quantity}"/>
+                                        <GridViewColumn x:Name="notePcbSpecColumn" Header="Примечание" DisplayMemberBinding="{Binding note}"/>
+                                        <GridViewColumn Header="Редактировать" Width="90">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Width="40" Click="PcbSpecEdit_Click" Tag="Other" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                        <Image Source="Images/edit.png" Height="22" />
+                                                    </Button>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="Добавить" Width="90">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Width="40" Click="PcbSpecAdd_Click" Tag="Other" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                        <Image Source="Images/add.png" Height="22" />
+                                                    </Button>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="Удалить" Width="90">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Width="40" Click="PcbSpecDelete_Click" Tag="Other" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                        <Image Source="Images/Delete.png" Height="22" />
+                                                    </Button>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                            <Button Grid.Row="1" Tag="Прочие изделия" Content="Добавить строку снизу в прочие изделия" Click="PcbSpecAdd_Click"/>
+                        </Grid>
+                    </TabItem.Content>
+                </TabItem>
+                <TabItem Header="Материалы">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="materialsPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Materials" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Materials" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Materials" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в мателиалы" Tag="Материалы" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Комплекты">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+                        <ListView x:Name="complectsPcbSpecListView" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Формат" DisplayMemberBinding="{Binding format}" Width="{Binding ElementName=formatSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Зона" DisplayMemberBinding="{Binding zona}" Width="{Binding ElementName=zonaSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Поз." DisplayMemberBinding="{Binding position}" Width="{Binding ElementName=positionSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Обозначение" DisplayMemberBinding="{Binding oboznachenie}" Width="{Binding ElementName=oboznachSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Наименование" DisplayMemberBinding="{Binding name}" Width="{Binding ElementName=nameSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Кол." DisplayMemberBinding="{Binding quantity}" Width="{Binding ElementName=quantitySpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Примечание" DisplayMemberBinding="{Binding note}" Width="{Binding ElementName=noteSpecColumn,Path=Width}"/>
+                                    <GridViewColumn Header="Редактировать" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecEdit_Click" Tag="Complects" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/edit.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Добавить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecAdd_Click" Tag="Complects" Height="25" Background="Transparent" ToolTip="Вставить строку сверху" CommandParameter="{Binding}">
+                                                    <Image Source="Images/add.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Удалить" Width="90">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Width="40" Click="PcbSpecDelete_Click" Tag="Complects" Height="25" Background="Transparent" CommandParameter="{Binding}">
+                                                    <Image Source="Images/Delete.png" Height="22" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Content="Добавить строку снизу в комплекты" Tag="Комплекты" Click="PcbSpecAdd_Click"/>
+                    </Grid>
+                </TabItem>
+            </TabControl>
         </Grid>
-       
+        <Grid x:Name="waitGrid" Grid.RowSpan="2" Grid.ColumnSpan="5" Background="Black" Opacity="0.7" Visibility="Hidden">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="5*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Label x:Name="waitMessageLabel" Grid.Row="1" Content="Пожалуйста, подождите..." Foreground="White" FontSize="30" HorizontalAlignment="Center"/>
+        </Grid>
     </Grid>
 </Window>

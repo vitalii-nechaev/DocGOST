@@ -22,13 +22,10 @@ using SQLite;
 
 namespace DocGOST.Data
 {
-    class OsnNadpisItem
+    class SettingsItem
     {
-        [PrimaryKey]
-        public string grapha { get; set; } // Номер графы
-        public string specificationValue { get; set; } // Значение для спецификации
-        public string perechenValue { get; set; } // Значение для перечня элементов 
-        public string vedomostValue { get; set; } // Значение для ведомости
-        public string pcbSpecificationValue { get; set; } // Значение для спецификации
+        [PrimaryKey]         
+        public string name { get; set; } // Наименование параметра
+        public string valueString { get; set; } // Значение параметра        
     }
 }

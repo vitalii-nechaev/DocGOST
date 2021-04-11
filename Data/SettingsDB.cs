@@ -22,13 +22,36 @@ using SQLite;
 
 namespace DocGOST.Data
 {
-    class OsnNadpisItem
+    class SettingsDB
     {
-        [PrimaryKey]
-        public string grapha { get; set; } // Номер графы
-        public string specificationValue { get; set; } // Значение для спецификации
-        public string perechenValue { get; set; } // Значение для перечня элементов 
-        public string vedomostValue { get; set; } // Значение для ведомости
-        public string pcbSpecificationValue { get; set; } // Значение для спецификации
+        SQLiteConnection db;
+
+        public SettingsDB()
+        {
+            string databasePath = "settings.sGOST";
+            db = new SQLiteConnection(databasePath);
+
+            db.CreateTable<SettingsItem>();
+        }
+
+        public int SaveSettingItem(SettingsItem item)
+        {
+            return db.InsertOrReplace(item);
+        }
+
+        public int DeleteSettingsItem(SettingsItem item)
+        {
+            return db.Table<SettingsItem>().Delete(x => x.name == item.name);
+        }
+
+        public int GetLength()
+        {
+            return db.Table<SettingsItem>().OrderByDescending(p => p.name).Count();
+        }
+
+        public SettingsItem GetItem(string name)
+        {
+            return db.Table<SettingsItem>().Where(x => x.name == name).FirstOrDefault();
+        }
     }
 }

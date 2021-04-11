@@ -30,6 +30,19 @@ namespace DocGOST
     {
         const int maxNoteLength = 12;
 
+        private int GetDesignatorValue(string designator)
+        {
+            int result = 0;
+            if (designator.Length > 1)
+            {
+                if (Char.IsDigit(designator[1]))                
+                    result = int.Parse(designator.Substring(1, designator.Length - 1));                
+                else
+                    result = int.Parse(designator.Substring(2, designator.Length - 2));                
+            }
+            return result;
+        }
+
         public List<SpecificationItem> groupSpecificationElements(List<SpecificationItem> sList, ref int numberOfValidStrings)
         {
             #region Группировка элементов спецификации из раздела "Прочие" с одинаковым наименованием, которые идут подряд            
@@ -49,10 +62,14 @@ namespace DocGOST
             tempItem.docum = sList[0].docum;
             tempItem.group = sList[0].group;
 
+            int prevDesignatorValue = GetDesignatorValue(sList[0].designator);
+
 
             for (int i = 1; i < numberOfValidStrings; i++)
             {
-                if (sList[i].name == prevElemName)
+                int designatorValue = GetDesignatorValue(sList[i].designator);
+
+                if ((sList[i].name == prevElemName)&(designatorValue == prevDesignatorValue+1))
                 {
                     tempItem.note += "," + sList[i].note;
                     tempItem.quantity = (int.Parse(tempItem.quantity) + 1).ToString();
@@ -73,6 +90,7 @@ namespace DocGOST
                 }
                 if (i == (numberOfValidStrings - 1)) { tempList.Add(tempItem); position++; }
                 prevElemName = sList[i].name;
+                prevDesignatorValue = designatorValue;
             }
 
             numberOfValidStrings = position;

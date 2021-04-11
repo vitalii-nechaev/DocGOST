@@ -43,10 +43,16 @@ namespace DocGOST.Data
             db.CreateTable<PerechenItem>();
             db.CreateTable<SpecificationItem>();
             db.CreateTable<VedomostItem>();
+            db.CreateTable<PcbSpecificationItem>();
             db.CreateTable<OsnNadpisItem>();
+            db.CreateTable<ParameterItem>();
 
-            //Если новый проект, заполняем основную надпись значениями по умолчанию
-            if (db.Table<OsnNadpisItem>().Where(x => x.grapha == "1a").FirstOrDefault() == null) FillDefaultValues();
+            //Если новый проект, заполняем основную надпись и параметры проекта значениями по умолчанию
+            if (db.Table<OsnNadpisItem>().Where(x => x.grapha == "1a").FirstOrDefault() == null)
+            {
+                FillDefaultValues();
+                FillParameterDefaultValues();
+            }
 
             id = new Global();
         }
@@ -56,7 +62,7 @@ namespace DocGOST.Data
         /// </summary>
         /// <param name="perTempNumber"> Номер текущего промежуточного сохранения перечня элементов</param>
         /// <param name="specTempNumber"> Номер текущего промежуточного сохранения спецификации</param>
-        public void Save(int perTempNumber, int specTempNumber, int vedomostTempNumber)
+        public void Save(int perTempNumber, int specTempNumber, int vedomostTempNumber, int pcbSpecTempNumber)
         {
             //Перечень элементов:
             //Удаление сохранённых ранее данных:
@@ -96,6 +102,19 @@ namespace DocGOST.Data
                 vedomostItem = GetVedomostItem(i, vedomostTempNumber);
                 vedomostItem.id = i;
                 AddVedomostItem(vedomostItem);
+            }
+
+            //Спецификация на печатную плату:
+            //Удаление сохранённых ранее данных:
+            db.Table<PcbSpecificationItem>().Delete(x => x.id <= Global.TempStartPosMask); //Удаляем все элементы, у которых tempNum = 0
+            //Сохранение текущих элементов:
+            int pcbSpecLength = GetPcbSpecLength(pcbSpecTempNumber);
+            for (int i = 1; i <= pcbSpecLength; i++)
+            {
+                PcbSpecificationItem specItem = new PcbSpecificationItem();
+                specItem = GetPcbSpecItem(i, pcbSpecTempNumber);
+                specItem.id = i;
+                AddPcbSpecItem(specItem);
             }
         }
 
@@ -289,6 +308,69 @@ namespace DocGOST.Data
         }
         #endregion
 
+        #region Операции со спецификацией на печатную плату
+        /// <summary>
+        /// Возвращает длину спецификации с номером временного сохранения tempNumber
+        /// </summary>
+        /// <param name="tempNumber"> Номер временного сохранения </param>
+        /// <returns></returns>
+        public int GetPcbSpecLength(int tempNumber)
+        {
+            for (int i = 1; i < int.MaxValue; i++)
+            {
+                int tempID = id.makeID(i, tempNumber);
+                if (db.Table<PcbSpecificationItem>().Where(x => x.id == tempID).FirstOrDefault() == null)
+                {
+                    return i - 1;
+                }
+
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Возвращает элемент спецификации с номером временного сохранения tempNumber из строчки strNumber
+        /// </summary>
+        /// <param name="strNum"> Номер строки элемента спецификации </param>
+        /// <param name="tempNumber"> Номер временного сохранения </param>
+        /// <returns></returns>
+        public PcbSpecificationItem GetPcbSpecItem(int strNum, int tempNumber)
+        {
+            int tempID = id.makeID(strNum, tempNumber);
+            return db.Table<PcbSpecificationItem>().Where(x => x.id == tempID).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Возвращает список записей спецификации с номером текущего сохранения tempNumber
+        /// </summary>
+        /// <param name="tempNumber"> номер текущего сохранения </param>
+        /// <returns></returns>
+        public List<PcbSpecificationItem> GetPcbSpecificationList(int tempNumber)
+        {
+            int minID = tempNumber << 20;
+            int maxID = (tempNumber + 1) << 20;
+            return db.Table<PcbSpecificationItem>().Where(s => s.id > minID).Where(s => s.id < maxID).ToList();
+        }
+
+        /// <summary>
+        /// Добавляет элемент спецификации в базу данных проекта
+        /// </summary>
+        /// <param name="item"> Элемент спецификации </param>
+        /// <returns></returns>
+        public int AddPcbSpecItem(PcbSpecificationItem item)
+        {
+            return db.InsertOrReplace(item);
+        }
+
+        /// <summary>Удаляет временные данные спецификации после specTempNumber </summary> 
+        public void DeletePcbSpecTempData(int specTempNumber)
+        {
+            int specStartID = (specTempNumber + 1) << Global.TempStartPos;
+            db.Table<PcbSpecificationItem>().Delete(x => x.id > specStartID);
+        }
+        #endregion
+
+
         #region Операции с основной надписью
 
         /// <summary>
@@ -322,21 +404,25 @@ namespace DocGOST.Data
             osnNadpisItem.perechenValue = "Наименование";
             osnNadpisItem.specificationValue = osnNadpisItem.perechenValue;
             osnNadpisItem.vedomostValue = osnNadpisItem.perechenValue;
+            osnNadpisItem.pcbSpecificationValue = "Плата печатная";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "1b";
             osnNadpisItem.perechenValue = "Перечень элементов";
             osnNadpisItem.specificationValue = String.Empty;
+            osnNadpisItem.pcbSpecificationValue = String.Empty;
             osnNadpisItem.vedomostValue = "Ведомость покупных изделий";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "2";
             osnNadpisItem.specificationValue = "АБВГ.ХХХХХХ.ХХХ";
             osnNadpisItem.perechenValue = osnNadpisItem.specificationValue + " ПЭ3";
             osnNadpisItem.vedomostValue = osnNadpisItem.specificationValue + " ВП";
+            osnNadpisItem.pcbSpecificationValue = "АБВГ.6ХХХХХ.ХХХ";
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "3";
             osnNadpisItem.perechenValue = String.Empty;
             osnNadpisItem.specificationValue = osnNadpisItem.perechenValue;
             osnNadpisItem.vedomostValue = osnNadpisItem.perechenValue;
+            osnNadpisItem.pcbSpecificationValue = osnNadpisItem.perechenValue;
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "4a";
             SaveOsnNadpisItem(osnNadpisItem);
@@ -358,11 +444,13 @@ namespace DocGOST.Data
             osnNadpisItem.perechenValue = "Согл.";
             osnNadpisItem.specificationValue = osnNadpisItem.perechenValue;
             osnNadpisItem.vedomostValue = osnNadpisItem.perechenValue;
+            osnNadpisItem.pcbSpecificationValue = osnNadpisItem.perechenValue;
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "11a";
             osnNadpisItem.perechenValue = String.Empty;
             osnNadpisItem.specificationValue = osnNadpisItem.perechenValue;
             osnNadpisItem.vedomostValue = osnNadpisItem.perechenValue;
+            osnNadpisItem.pcbSpecificationValue = osnNadpisItem.perechenValue;
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "11b";
             SaveOsnNadpisItem(osnNadpisItem);
@@ -390,6 +478,7 @@ namespace DocGOST.Data
             osnNadpisItem.perechenValue = "АБВГ.ХХХХХХ.ХХХ"; //Для перечня здесь указываем спецификацию
             osnNadpisItem.vedomostValue = "АБВГ.ХХХХХХ.ХХХ"; //Для ведомости здесь указываем спецификацию
             osnNadpisItem.specificationValue = String.Empty;
+            osnNadpisItem.pcbSpecificationValue = "АБВГ.ХХХХХХ.ХХХ"; //Для ведомости здесь указываем спецификацию
             SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "32";
             osnNadpisItem.perechenValue = "А4";
@@ -398,6 +487,42 @@ namespace DocGOST.Data
             SaveOsnNadpisItem(osnNadpisItem);            
         }
 
-        #endregion       
+        #endregion
+
+        #region Операции с параметрами проекта
+
+        /// <summary>
+        /// Сохраняет в базу данных проекта параметр <c>item</c>
+        /// </summary>
+        /// <param name="item"> Название параметра </param>
+        /// <returns></returns>
+        public int SaveParameterItem(ParameterItem item)
+        {
+            return db.InsertOrReplace(item);
+        }
+
+        /// <summary>
+        /// Возвращает параметр с названием <c>name</c>
+        /// </summary>
+        /// <param name="name">Название параметра (Variant, isListRegistrChecked, isStartFromSecondChecked)</param>
+        /// <returns></returns>
+        public ParameterItem GetParameterItem(string name)
+        {
+            return db.Table<ParameterItem>().Where(x => x.name == name).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Заполнение параметров значениями по умолчанию
+        /// </summary>
+        /// <remarks> Вызывается при создании нового проекта </remarks>
+        private void FillParameterDefaultValues()
+        {
+            ParameterItem paramItem = new ParameterItem();
+            paramItem.name = "Variant";
+            paramItem.value = "[No Variations]";
+            SaveParameterItem(paramItem);
+        }
+
+        #endregion
     }
 }
