@@ -308,7 +308,7 @@ namespace DocGOST
             tempSpecItem.quantity = String.Empty;
             tempSpecItem.spSection = (int)Global.SpSections.Documentation;
             specList.Add(tempSpecItem);
-             
+
 
             PerechenItem tempPerechen = new PerechenItem();
             SpecificationItem tempSpecification = new SpecificationItem();
@@ -368,19 +368,19 @@ namespace DocGOST
             List<SpecificationItem> specOtherListSorted = new List<SpecificationItem>();
             List<VedomostItem> vedomostListSorted = new List<VedomostItem>();
 
-            
+
             specOtherListSorted = specList.Where(x => x.spSection == ((int)Global.SpSections.Other)).OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
             vedomostListSorted = vedomostList.OrderBy(x => MakeDesignatorForOrdering(x.designator)).ToList();
-            
+
             perechenList[0].id = id.makeID(1, perTempSave.GetCurrent());
             specOtherListSorted[0].id = id.makeID(1 + (numberOfValidStrings - specOtherListSorted.Count), specTempSave.GetCurrent());
             vedomostListSorted[0].id = id.makeID(1, vedomostTempSave.GetCurrent());
-            
+
 
             saveProjectMenuItem.IsEnabled = true;
             undoMenuItem.IsEnabled = true;
             redoMenuItem.IsEnabled = true;
-            
+
             groupByName(perechenList, specList.Where(x => x.spSection != ((int)Global.SpSections.Other)).ToList(), specOtherListSorted, vedomostListSorted);
 
             //waitGrid.Visibility = Visibility.Hidden;
@@ -442,7 +442,7 @@ namespace DocGOST
             {
                 string schPath = String.Empty;
                 if (prjStr.Length > 13)
-                    if ((prjStr.Substring(0, 13) == "DocumentPath=") & (prjStr.Substring(prjStr.Length - 6, 6) == "SchDoc"))
+                    if ((prjStr.Substring(0, 13).ToUpper() == "DOCUMENTPATH=") & (prjStr.Substring(prjStr.Length - 6, 6).ToUpper() == "SCHDOC"))
                     {
                         schPath = Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
 
@@ -453,8 +453,9 @@ namespace DocGOST
                         string schStr = String.Empty;
 
                         bool isNoBom = false;
-                        bool isFirstPartOfComponent = false;
+                        bool isFirstPartOfComponent = true;
                         bool isComponent = false;
+
 
                         while ((schStr = schReader.ReadLine()) != null)
                         {
@@ -464,25 +465,28 @@ namespace DocGOST
                                 if (isComponent == true)
                                 {
                                     if (schStrArray[i].Length >= 23)
-                                        if (schStrArray[i].Substring(0, 23) == "COMPONENTKINDVERSION2=5") isNoBom = true;
+                                        if (schStrArray[i].Substring(0, 23).ToUpper() == "COMPONENTKINDVERSION2=5") isNoBom = true;
 
                                     if (schStrArray[i].Length >= 15)
-                                        if (schStrArray[i].Substring(0, 14) == "CURRENTPARTID=")
-                                            if ((schStrArray[i].Substring(0, 15) != "CURRENTPARTID=1") | (schStrArray[i].Length > 15)) isFirstPartOfComponent = false;
+                                        if (schStrArray[i].Substring(0, 14).ToUpper() == "CURRENTPARTID=")
+                                            if ((schStrArray[i].Substring(0, 15).ToUpper() != "CURRENTPARTID=1") | (schStrArray[i].Length > 15)) isFirstPartOfComponent = false;
 
                                     if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
-                                        if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                        if ((schStrArray[i].Substring(0, 5).ToUpper() == "TEXT=") & (schStrArray[i + 1].Substring(0, 5).ToUpper() == "NAME="))
                                         {
                                             ComponentProperties prop = new ComponentProperties();
                                             prop.Name = schStrArray[i + 1].Substring(5);
                                             prop.Text = schStrArray[i].Substring(5);
                                             if (isNoBom == false)
+                                            {
                                                 //if ((prop.Name == "Designator") | (prop.Name == "SType") | (prop.Name == "Docum") | (prop.Name == "Note"))
                                                 componentPropList.Add(prop);
+                                            }
+
                                         }
 
                                     if (schStrArray[i].Length >= 8)
-                                        if ((schStrArray[i].Substring(0, 7) == "HEADER=") | ((schStrArray[i].Substring(0, 8) == "RECORD=1") & (schStrArray[i].Length == 8))) //Считаем, что описание каждого компонента заканчивается этой фразой
+                                        if ((schStrArray[i].Substring(0, 7).ToUpper() == "HEADER=") | ((schStrArray[i].ToUpper() == "RECORD=1") & (schStrArray[i].Length == 8))) //Считаем, что описание каждого компонента заканчивается этой фразой
                                         {
                                             if ((isNoBom == false) & (componentPropList.Count > 0) & (isFirstPartOfComponent == true))
                                             {
@@ -502,7 +506,7 @@ namespace DocGOST
                                 {
                                     //Запись полей основной надписи в базу данных проекта, если они встречаются в файле Sch:
                                     if ((schStrArray[i].Length > 5) & (schStrArray[i + 1].Length > 5))
-                                        if ((schStrArray[i].Substring(0, 5) == "TEXT=") & (schStrArray[i + 1].Substring(0, 5) == "NAME="))
+                                        if ((schStrArray[i].Substring(0, 5).ToUpper() == "TEXT=") & (schStrArray[i + 1].Substring(0, 5).ToUpper() == "NAME="))
                                         {
                                             ComponentProperties prop = new ComponentProperties();
                                             prop.Name = schStrArray[i + 1].Substring(5);
@@ -513,7 +517,7 @@ namespace DocGOST
                                 }
                                 //Теперь ищем все записи компонента и сохраняем их
                                 if (schStrArray[i].Length == 8)
-                                    if (schStrArray[i].Substring(0, 8) == "RECORD=1") //Считаем, что описание каждого компонента начинается этой фразой
+                                    if (schStrArray[i].Substring(0, 8).ToUpper() == "RECORD=1") //Считаем, что описание каждого компонента начинается этой фразой
                                         isComponent = true;
                             }
                         }
@@ -557,28 +561,79 @@ namespace DocGOST
 
             ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
 
+            string defaultDesignatorPropName = "Designator";
+            string defaultNamePropName = "PartNumber";
+            string defaultDocumPropName = "Manufacturer";
+            string defaultNotePropName = "Note";
+
+            #region Считывание наименований параметров компонентов из базы данных
+            SettingsItem propNameItem = new SettingsItem();
+            SettingsDB settingsDB = new SettingsDB();
+
+            //Чтение наименования свойства с позиционным обозначением
+            if (settingsDB.GetItem("designatorPropName") == null)
+            {
+                propNameItem.name = "designatorPropName";
+                propNameItem.valueString = "Designator";
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("designatorPropName");
+            defaultDesignatorPropName = propNameItem.valueString;
+
+            //Чтение наименования свойства с наименованием компонента
+            if (settingsDB.GetItem("namePropName") == null)
+            {
+                propNameItem.name = "namePropName";
+                propNameItem.valueString = "PartNumber";
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("namePropName");
+            defaultNamePropName = propNameItem.valueString;
+
+            //Чтение наименования свойства с документом на поставку компонента
+            if (settingsDB.GetItem("documPropName") == null)
+            {
+                propNameItem.name = "documPropName";
+                propNameItem.valueString = "Manufacturer";
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("documPropName");
+            defaultDocumPropName = propNameItem.valueString;
+
+            //Чтение наименования свойства с комментарием
+            if (settingsDB.GetItem("notePropName") == null)
+            {
+                propNameItem.name = "notePropName";
+                propNameItem.valueString = "Note";
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("notePropName");
+            defaultNotePropName = propNameItem.valueString;
+            #endregion
+
+
             importPcbPrjWindow.designatorComboBox.ItemsSource = propNames;
-            if (propNames.Contains("Designator")) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == "Designator");
+            if (propNames.Contains(defaultDesignatorPropName)) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultDesignatorPropName);
             else
             {
                 importPcbPrjWindow.designatorComboBox.SelectedIndex = 0;
                 importPcbPrjWindow.nextButton.IsEnabled = false;
-                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование\" должны быть заданы";
             }
             importPcbPrjWindow.nameComboBox.ItemsSource = propNames;
-            if (propNames.Contains("SType")) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == "SType");
+            if (propNames.Contains(defaultNamePropName)) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultNamePropName);
             else
             {
                 importPcbPrjWindow.nameComboBox.SelectedIndex = 0;
                 importPcbPrjWindow.nextButton.IsEnabled = false;
-                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование должны быть заданы\"";
+                importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование\" должны быть заданы";
             }
 
             importPcbPrjWindow.documComboBox.ItemsSource = propNames;
-            if (propNames.Contains("Docum")) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == "Docum");
+            if (propNames.Contains(defaultDocumPropName)) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultDocumPropName);
             else importPcbPrjWindow.documComboBox.SelectedIndex = 0;
             importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
-            if (propNames.Contains("Note")) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == "Note");
+            if (propNames.Contains(defaultNotePropName)) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultNotePropName);
             else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
 
             if (importPcbPrjWindow.ShowDialog() == true)
@@ -623,6 +678,32 @@ namespace DocGOST
                 specList.Add(plataSpecItem);
 
 
+                string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
+                string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
+                string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
+                string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
+
+                #region Сохранение выбранных наименований свойств комопонентов в SettingsDB
+                propNameItem = new SettingsItem();
+                settingsDB = new SettingsDB();
+
+                propNameItem.name = "designatorPropName";
+                propNameItem.valueString = designatorName;
+                settingsDB.SaveSettingItem(propNameItem);
+
+                propNameItem.name = "namePropName";
+                propNameItem.valueString = nameName;
+                settingsDB.SaveSettingItem(propNameItem);
+
+                propNameItem.name = "documPropName";
+                propNameItem.valueString = documName;
+                settingsDB.SaveSettingItem(propNameItem);
+
+                propNameItem.name = "notePropName";
+                propNameItem.valueString = noteName;
+                settingsDB.SaveSettingItem(propNameItem);
+                #endregion
+
                 for (int i = 0; i < numberOfStrings; i++)
                 {
                     PerechenItem tempPerechen = new PerechenItem();
@@ -634,7 +715,7 @@ namespace DocGOST
                     tempPerechen.designator = string.Empty;
                     tempPerechen.name = string.Empty;
                     tempPerechen.quantity = "1";
-                    
+
                     tempPerechen.docum = string.Empty;
                     tempPerechen.type = string.Empty;
                     tempPerechen.group = string.Empty;
@@ -642,19 +723,15 @@ namespace DocGOST
                     tempPerechen.isNameUnderlined = false;
                     tempPerechen.note = string.Empty;
 
-                    string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
-                    string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
-                    string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
-                    string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
-
                     for (int j = 0; j < (componentsList[i]).Count; j++)
-                    {  
+                    {
                         ComponentProperties prop;
                         try
                         {
                             prop = (componentsList[i])[j];
 
                             if (prop.Name == designatorName) tempPerechen.designator = prop.Text;
+
                             else if (prop.Name == nameName) tempPerechen.name = prop.Text;
                             else if (prop.Name == documName) tempPerechen.docum = prop.Text;
                             else if (prop.Name == noteName) tempPerechen.note = prop.Text;
@@ -664,7 +741,7 @@ namespace DocGOST
                             MessageBox.Show(j.ToString() + "/" + ((componentsList[i]).Capacity - 1).ToString() + ' ' + i.ToString() + "/" + numberOfStrings);
                         }
                     }
-                     
+
 
                     tempSpecification.id = tempPerechen.id;
                     tempSpecification.spSection = (int)Global.SpSections.Other;
