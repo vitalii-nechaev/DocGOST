@@ -940,15 +940,7 @@ namespace DocGOST
                         {
                             isPcbMultilayer = false;
 
-                            ParameterItem parameterItem = new ParameterItem();
-                            parameterItem.name = "isPcbMultilayer";
-                            parameterItem.value = "false";
-                            project.SaveParameterItem(parameterItem);
-                            plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
-                            ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                         }
-                        pcbReader.Close();
-                    }
 
                 prevPrevPrjStr = prevPrjStr;
                 prevPrjStr = prjStr;
@@ -1073,10 +1065,9 @@ namespace DocGOST
                 #region Заполнение списков для базы данных проекта
                 createPdfMenuItem.IsEnabled = true;
 
-                List<PerechenItem> perechenList = new List<PerechenItem>();
-                List<SpecificationItem> specList = new List<SpecificationItem>();
-                List<VedomostItem> vedomostList = new List<VedomostItem>();
-                List<PcbSpecificationItem> pcbSpecList = new List<PcbSpecificationItem>();
+                    List<PerechenItem> perechenList = new List<PerechenItem>();
+                    List<SpecificationItem> specList = new List<SpecificationItem>();
+                    List<VedomostItem> vedomostList = new List<VedomostItem>();
 
                 int numberOfValidStrings = 0;
 
@@ -1280,33 +1271,7 @@ namespace DocGOST
                         }
                     }
 
-                    #region В случае наличиня исполнений
-                    bool isDNF = false;
-                    int variantIndex = importPcbPrjWindow.variantSelectionComboBox.SelectedIndex;
-                    if (variantIndex > 0)
-                    {
-                        string variantName = importPcbPrjWindow.variantSelectionComboBox.SelectedItem.ToString();
-                        //Записываем выбранный вариант в ProjectDB
-                        ParameterItem parameterItem = new ParameterItem();
-                        parameterItem.name = "Variant";
-                        parameterItem.value = variantName;
-                        project.SaveParameterItem(parameterItem);
 
-                        ((TreeViewItem)(projectTreeViewItem.Items[0])).Header = "Исполнение: " + variantName;
-
-                        for (int j = 0; j < dnfVariantDesignatorsList[variantIndex - 1].Count; j++)
-                            if (dnfVariantDesignatorsList[variantIndex - 1][j] == tempPerechen.designator) isDNF = true;
-                        for (int j = 0; j < fittedVariantDesignatorsList[variantIndex - 1].Count; j++)
-                        {
-                            if (fittedVariantDesignatorsList[variantIndex - 1][j] == tempPerechen.designator)
-                            {
-                                for (int k = 0; k < componentsVariantList[variantIndex - 1][j].Count; k++)
-                                {
-                                    if (componentsVariantList[variantIndex - 1][j][k].Name == nameName) tempPerechen.name = componentsVariantList[variantIndex - 1][j][k].Text;
-                                    if (componentsVariantList[variantIndex - 1][j][k].Name == documName) tempPerechen.docum = componentsVariantList[variantIndex - 1][j][k].Text;
-                                    if (componentsVariantList[variantIndex - 1][j][k].Name == noteName) tempPerechen.note = componentsVariantList[variantIndex - 1][j][k].Text;
-                                }
-                            }
                         }
 
                     }
@@ -1345,14 +1310,12 @@ namespace DocGOST
                         tempVedomost.isNameUnderlined = false;
 
 
-
-                        string group = string.Empty;
                         DesignatorDB designDB = new DesignatorDB();
                         int descrDBLength = designDB.GetLength();
 
-                        for (int j = 0; j < descrDBLength; j++)
-                        {
-                            DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
+                    for (int j = 0; j < descrDBLength; j++)
+                    {
+                        DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
 
                             if (tempPerechen.designator.Length >= 2)
                                 if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
@@ -1370,7 +1333,7 @@ namespace DocGOST
                         }
 
 
-                        tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
+                    tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
 
                         perechenList.Add(tempPerechen);
                         specList.Add(tempSpecification);
