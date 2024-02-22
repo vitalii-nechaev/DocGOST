@@ -204,7 +204,7 @@ namespace DocGOST
             openDlg.Filter = "Файлы проекта (*.docGOST)|*.docGOST";
             if (openDlg.ShowDialog() == true)
             {
-                
+
 
                 MessageBoxResult closingDialogResult = MessageBoxResult.No;
                 if ((perTempSave != null) & (specTempSave != null) & (pcbSpecTempSave != null) & (vedomostTempSave != null))
@@ -280,8 +280,8 @@ namespace DocGOST
 
                     projectTreeViewItem.ExpandSubtree();
 
-                    
-                        
+
+
 
                     //Устанавливаем состояние флажков параметров экспорта в pdf
                     if (project.GetParameterItem("isListRegistrChecked") == null)
@@ -356,7 +356,7 @@ namespace DocGOST
                         ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                     }
 
-                   
+
 
                     DisplayAllValues();
 
@@ -583,7 +583,7 @@ namespace DocGOST
 
             List<List<string[]>> prjParamsVariantList = new List<List<string[]>>();
 
-            
+
             variantNameList.Add("No Variations");
             bool isWaitingVariantDescription = false;
 
@@ -824,8 +824,8 @@ namespace DocGOST
                         //Добавляем плату в спецификацию                             
                         //plataSpecItem.oboznachenie = prjStr.Substring(13, prjStr.Length - 20);
                         //plataSpecItem.oboznachenie = plataSpecItem.oboznachenie.Split(new char[] { '\\' }).Last();
-                       
-                        
+
+
                         string pcbPath = Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
 
                         //Открываем файл платы AD для получения данных:
@@ -835,7 +835,7 @@ namespace DocGOST
                         string pcbStr = String.Empty;
 
                         //Считываем свойства платы
-                        bool isLayersCounting = false;                        
+                        bool isLayersCounting = false;
                         string dielLayerNumber = String.Empty;
                         List<DielProperties> pcbMaterialsTempList = new List<DielProperties>();
                         DielProperties pcbMaterialsItem = new DielProperties();
@@ -868,9 +868,9 @@ namespace DocGOST
                                     isLayersCounting = false;
                                 }
                                 //Определяем наименования и толщины диэлектриков
-                                
+
                                 if (curStrLength >= 26)
-                                  if ((pcbStrArray[i].Substring(0, 14).ToUpper() == "V9_STACK_LAYER") & (pcbStrArray[i].Substring(curStrLength-10).ToUpper() == "DIELTYPE=2"))
+                                    if ((pcbStrArray[i].Substring(0, 14).ToUpper() == "V9_STACK_LAYER") & (pcbStrArray[i].Substring(curStrLength - 10).ToUpper() == "DIELTYPE=2"))
                                     {
                                         dielLayerNumber = pcbStrArray[i].Substring(("V9_STACK_LAYER").Length);
                                         dielLayerNumber = dielLayerNumber.Substring(0, dielLayerNumber.Length - "_DIELTYPE=2".Length);
@@ -884,13 +884,13 @@ namespace DocGOST
                                     }
 
                                 if (curStrLength > 27)
-                                    if (pcbStrArray[i].Substring(0, 26+dielLayerNumber.Length)== "V9_STACK_LAYER" + dielLayerNumber + "_DIELHEIGHT=")
+                                    if (pcbStrArray[i].Substring(0, 26 + dielLayerNumber.Length) == "V9_STACK_LAYER" + dielLayerNumber + "_DIELHEIGHT=")
                                     {
                                         double height = 0;
                                         string heightStr = pcbStrArray[i].Substring(26 + dielLayerNumber.Length);
                                         if (heightStr.Substring(heightStr.Length - 3) == "mil") heightStr = heightStr.Trim("mil".ToCharArray());
                                         IFormatProvider formatter = new System.Globalization.NumberFormatInfo { NumberDecimalSeparator = "." };
-                                        height = Math.Round(Convert.ToDouble(heightStr, formatter)*0.0254,3);
+                                        height = Math.Round(Convert.ToDouble(heightStr, formatter) * 0.0254, 3);
                                         pcbMaterialsItem.Height = height.ToString("N3");
                                     }
                                 if (curStrLength > 29)
@@ -909,7 +909,7 @@ namespace DocGOST
                             isPcbMultilayer = true;
 
                             ParameterItem parameterItem = new ParameterItem();
-                            parameterItem.name = "isPcbMultilayer";                            
+                            parameterItem.name = "isPcbMultilayer";
                             parameterItem.value = "true";
                             project.SaveParameterItem(parameterItem);
 
@@ -921,26 +921,34 @@ namespace DocGOST
                                 if (pcbMaterialsList.Count > 0)
                                 {
                                     bool listContainsItem = false;
-                                    for (int i=0; i < pcbMaterialsList.Count; i++)
-                                    if ((pcbMaterialsList[i].Name == pcbMaterialTempItem.Name)&(pcbMaterialsList[i].Height == pcbMaterialTempItem.Height)&(pcbMaterialsList[i].DielType == pcbMaterialTempItem.DielType))
-                                    {                                        
-                                        pcbMaterialsList[i].Quantity++;
+                                    for (int i = 0; i < pcbMaterialsList.Count; i++)
+                                        if ((pcbMaterialsList[i].Name == pcbMaterialTempItem.Name) & (pcbMaterialsList[i].Height == pcbMaterialTempItem.Height) & (pcbMaterialsList[i].DielType == pcbMaterialTempItem.DielType))
+                                        {
+                                            pcbMaterialsList[i].Quantity++;
                                             listContainsItem = true;
-                                    }
+                                        }
 
                                     if (listContainsItem == false) pcbMaterialsList.Add(pcbMaterialTempItem);
 
 
                                 }
                                 else pcbMaterialsList.Add(pcbMaterialTempItem);
-                                    
+
                             }
                         }
                         else
                         {
                             isPcbMultilayer = false;
 
+                            ParameterItem parameterItem = new ParameterItem();
+                            parameterItem.name = "isPcbMultilayer";
+                            parameterItem.value = "false";
+                            project.SaveParameterItem(parameterItem);
+                            plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
+                            ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                         }
+                        pcbReader.Close();
+                    }
 
                 prevPrevPrjStr = prevPrjStr;
                 prevPrjStr = prjStr;
@@ -1065,9 +1073,10 @@ namespace DocGOST
                 #region Заполнение списков для базы данных проекта
                 createPdfMenuItem.IsEnabled = true;
 
-                    List<PerechenItem> perechenList = new List<PerechenItem>();
-                    List<SpecificationItem> specList = new List<SpecificationItem>();
-                    List<VedomostItem> vedomostList = new List<VedomostItem>();
+                List<PerechenItem> perechenList = new List<PerechenItem>();
+                List<SpecificationItem> specList = new List<SpecificationItem>();
+                List<VedomostItem> vedomostList = new List<VedomostItem>();
+                List<PcbSpecificationItem> pcbSpecList = new List<PcbSpecificationItem>();
 
                 int numberOfValidStrings = 0;
 
@@ -1147,7 +1156,7 @@ namespace DocGOST
                     string name = String.Empty;
                     if (pcbMaterialItem.DielType == 1)
                     {
-                        coreQuantity+= pcbMaterialItem.Quantity;
+                        coreQuantity += pcbMaterialItem.Quantity;
                         name = "Стеклотекстолит ";
                     }
                     else name = "Препрег ";
@@ -1175,10 +1184,10 @@ namespace DocGOST
                     tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
                     pcbSpecList.Add(tempPcbSpecItem);
                 }
-                
+
 
                 OsnNadpisItem osnNadpisItem = new OsnNadpisItem();
-                               
+
 
                 DisplayPcbSpecValues(pcbSpecList);
                 //Сохраняем спецификацию для ПП в БД, потому что она не требует сортировки
@@ -1271,7 +1280,33 @@ namespace DocGOST
                         }
                     }
 
+                    #region В случае наличиня исполнений
+                    bool isDNF = false;
+                    int variantIndex = importPcbPrjWindow.variantSelectionComboBox.SelectedIndex;
+                    if (variantIndex > 0)
+                    {
+                        string variantName = importPcbPrjWindow.variantSelectionComboBox.SelectedItem.ToString();
+                        //Записываем выбранный вариант в ProjectDB
+                        ParameterItem parameterItem = new ParameterItem();
+                        parameterItem.name = "Variant";
+                        parameterItem.value = variantName;
+                        project.SaveParameterItem(parameterItem);
 
+                        ((TreeViewItem)(projectTreeViewItem.Items[0])).Header = "Исполнение: " + variantName;
+
+                        for (int j = 0; j < dnfVariantDesignatorsList[variantIndex - 1].Count; j++)
+                            if (dnfVariantDesignatorsList[variantIndex - 1][j] == tempPerechen.designator) isDNF = true;
+                        for (int j = 0; j < fittedVariantDesignatorsList[variantIndex - 1].Count; j++)
+                        {
+                            if (fittedVariantDesignatorsList[variantIndex - 1][j] == tempPerechen.designator)
+                            {
+                                for (int k = 0; k < componentsVariantList[variantIndex - 1][j].Count; k++)
+                                {
+                                    if (componentsVariantList[variantIndex - 1][j][k].Name == nameName) tempPerechen.name = componentsVariantList[variantIndex - 1][j][k].Text;
+                                    if (componentsVariantList[variantIndex - 1][j][k].Name == documName) tempPerechen.docum = componentsVariantList[variantIndex - 1][j][k].Text;
+                                    if (componentsVariantList[variantIndex - 1][j][k].Name == noteName) tempPerechen.note = componentsVariantList[variantIndex - 1][j][k].Text;
+                                }
+                            }
                         }
 
                     }
@@ -1310,12 +1345,14 @@ namespace DocGOST
                         tempVedomost.isNameUnderlined = false;
 
 
+
+                        string group = string.Empty;
                         DesignatorDB designDB = new DesignatorDB();
                         int descrDBLength = designDB.GetLength();
 
-                    for (int j = 0; j < descrDBLength; j++)
-                    {
-                        DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
+                        for (int j = 0; j < descrDBLength; j++)
+                        {
+                            DesignatorDescriptionItem desDescr = designDB.GetItem(j + 1);
 
                             if (tempPerechen.designator.Length >= 2)
                                 if ((desDescr.Designator == tempPerechen.designator.Substring(0, 1)) | (desDescr.Designator == tempPerechen.designator.Substring(0, 2)))
@@ -1333,7 +1370,7 @@ namespace DocGOST
                         }
 
 
-                    tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
+                        tempSpecification.name = group + " " + tempSpecification.name + " " + tempSpecification.docum;
 
                         perechenList.Add(tempPerechen);
                         specList.Add(tempSpecification);
@@ -1644,14 +1681,14 @@ namespace DocGOST
             pdf.CreateVedomost(pdfPath, startPage, addListRegistr, vedomostTempSave.GetCurrent());
             System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
 
-            if (isPcbMultilayer==true) //есил плата - сборочная единица
+            if (isPcbMultilayer == true) //есил плата - сборочная единица
             {
                 pdfPath = "Спецификация ПП.pdf";
                 pdf = new PdfOperations(projectPath);
                 pdf.CreatePcbSpecification(pdfPath, startPage, addListRegistr, specTempSave.GetCurrent());
                 System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
             }
-            
+
         }
 
         /// <summary> При закрытии окна программы выполняется проверка, сохранён ли проект, и показывается соответствующее диалоговое окно </summary>        
@@ -1733,7 +1770,7 @@ namespace DocGOST
                 vedomostResult.Add(vd);
                 project.AddVedomostItem(vd);
             }
-                        
+
 
             DisplayPerValues(perResult);
             DisplaySpecValues(specResult);
