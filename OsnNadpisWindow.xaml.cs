@@ -308,13 +308,13 @@ namespace DocGOST
             osnNadpisItem.specificationValue = gr25SpecTextBox.Text;
             osnNadpisItem.perechenValue = gr25PerechenTextBox.Text;
             osnNadpisItem.vedomostValue = gr25VedomostTextBox.Text;
-            osnNadpisItem.vedomostValue = gr25PcbSpecTextBox.Text;
+            osnNadpisItem.pcbSpecificationValue = gr25PcbSpecTextBox.Text;
             project.SaveOsnNadpisItem(osnNadpisItem);
             osnNadpisItem.grapha = "32";
             osnNadpisItem.specificationValue = "А4";
             osnNadpisItem.perechenValue = "А4";
             osnNadpisItem.vedomostValue = "А3";
-            osnNadpisItem.pcbSpecificationValue = gr25PcbSpecTextBox.Text;
+            osnNadpisItem.pcbSpecificationValue = "А4";
             project.SaveOsnNadpisItem(osnNadpisItem);
         }
     }

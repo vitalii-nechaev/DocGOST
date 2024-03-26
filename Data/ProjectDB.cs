@@ -125,6 +125,7 @@ namespace DocGOST.Data
         {
             db.Table<PerechenItem>().Delete(x => x.id > Global.TempStartPosMask);
             db.Table<SpecificationItem>().Delete(x => x.id > Global.TempStartPosMask);
+            db.Table<PcbSpecificationItem>().Delete(x => x.id > Global.TempStartPosMask);
             db.Table<VedomostItem>().Delete(x => x.id > Global.TempStartPosMask);
         }
 

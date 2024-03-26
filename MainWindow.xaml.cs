@@ -158,7 +158,7 @@ namespace DocGOST
 
         }
 
-        /// <summary> Переключение между спецификацией и перечнем в дереве проекта </summary>
+        /// <summary> Переключение между документами в дереве проекта </summary>
         private void treeSelectionChanged(object sender, RoutedEventArgs e)
         {
             string header = (sender as TreeViewItem).Header.ToString();
@@ -247,12 +247,15 @@ namespace DocGOST
                         variantName = project.GetParameterItem("Variant").value;
                     }
                     else variantName = "[No Variations]";
-
-                    if (project.GetParameterItem("isPcbMultiLayer") != null)
+                                        
+                    if (project.GetParameterItem("isPcbMultilayer") != null)
                     {
-                        variantName = project.GetParameterItem("Variant").value;
-                    }
-                    else variantName = "[No Variations]";
+                        if (project.GetParameterItem("isPcbMultilayer").value.ToLower() == "true")
+                            isPcbMultilayer = true;
+                    }                        
+                    else //если "false"
+                        isPcbMultilayer = false;
+
 
                     //Заполняем дерево проекта
                     TreeViewItem apparatItem = new TreeViewItem();
@@ -272,15 +275,18 @@ namespace DocGOST
                     docItem.Header = "Ведомость";
                     docItem.Selected += treeSelectionChanged;
                     apparatItem.Items.Add(docItem);
-                    docItem = new TreeViewItem();
-                    docItem.Header = "Спецификация ПП";
-                    docItem.Selected += treeSelectionChanged;
-                    apparatItem.Items.Add(docItem);
+                   
+                    if (isPcbMultilayer == true)
+                    {
+                        docItem = new TreeViewItem();
+                        docItem.Header = "Спецификация ПП";
+                        docItem.Selected += treeSelectionChanged;
+                        apparatItem.Items.Add(docItem);
+                    }
+                    
                     projectTreeViewItem.Items.Add(apparatItem);
 
                     projectTreeViewItem.ExpandSubtree();
-
-
 
 
                     //Устанавливаем состояние флажков параметров экспорта в pdf
@@ -328,15 +334,10 @@ namespace DocGOST
                         project.AddVedomostItem(vedomostItem);
                     }
                     vedomostTempSave.ProjectSaved();
-
-                    if (project.GetParameterItem("isPcbMultiLayer") != null)
+                    
+                    if (isPcbMultilayer)
                     {
-                        if (project.GetParameterItem("isPcbMultiLayer").value.ToLower() == "true") isPcbMultilayer = true;
-                        else
-                        {
-                            isPcbMultilayer = false;
-                            ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
-                        }
+                       
                         for (int i = 1; i <= project.GetPcbSpecLength(0); i++)
                         {
                             PcbSpecificationItem specItem = new PcbSpecificationItem();
@@ -351,12 +352,11 @@ namespace DocGOST
                         PcbSpecificationItem specItem = new PcbSpecificationItem();
                         specItem.id = id.makeID(0, pcbSpecTempSave.GetCurrent());
                         project.AddPcbSpecItem(specItem);
-
-                        isPcbMultilayer = false;
-                        ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
+                                               
+                        //((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                     }
 
-
+                    
 
                     DisplayAllValues();
 
@@ -971,6 +971,7 @@ namespace DocGOST
                     if (propNames.Contains(name) == false) propNames.Add(name);
                 }
             }
+            propNames.Sort(); //сортировка по алфавиту для удобства нахождения в списке нужного параметра
 
             ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
 
@@ -1122,6 +1123,17 @@ namespace DocGOST
                 tempSpecItem.quantity = String.Empty;
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
                 specList.Add(tempSpecItem);
+
+                /*tempSpecItem = new SpecificationItem();
+                numberOfValidStrings++;
+                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                tempSpecItem.format = "*)";
+                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Д33";
+                tempSpecItem.name = "Данные проектирования модуля";
+                tempSpecItem.quantity = String.Empty;
+                tempSpecItem.note = "*) CD-диск";
+                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                specList.Add(tempSpecItem);*/
 
                 project = new Data.ProjectDB(projectPath);
 
@@ -1502,7 +1514,7 @@ namespace DocGOST
 
             DisplayVedomostValues(resultVedomost);
 
-            //Вывод данных спецификации в окно программы:
+            //Вывод данных спецификации платы в окно программы:
             length = project.GetPcbSpecLength(pcbSpecTempSave.GetCurrent());
             List<PcbSpecificationItem> resultPcbSpec = new List<PcbSpecificationItem>(length);
 
@@ -1685,7 +1697,7 @@ namespace DocGOST
             {
                 pdfPath = "Спецификация ПП.pdf";
                 pdf = new PdfOperations(projectPath);
-                pdf.CreatePcbSpecification(pdfPath, startPage, addListRegistr, specTempSave.GetCurrent());
+                pdf.CreatePcbSpecification(pdfPath, startPage, addListRegistr, pcbSpecTempSave.GetCurrent());
                 System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
             }
 
@@ -1695,11 +1707,12 @@ namespace DocGOST
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             MessageBoxResult closingDialogResult = new MessageBoxResult();
-            if ((perTempSave != null) & (specTempSave != null) & (vedomostTempSave != null))
+            if ((perTempSave != null) & (specTempSave != null) & (vedomostTempSave != null) & (pcbSpecTempSave != null))
             {
                 if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
                     (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
-                    (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
+                    (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()) |
+                    (pcbSpecTempSave.GetCurrent() != pcbSpecTempSave.GetLastSavedState()))
                 {
                     closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNo);
                     if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent(), pcbSpecTempSave.GetCurrent());
@@ -2474,6 +2487,9 @@ namespace DocGOST
                 pcbSpecTempSave.ProjectSaved();
                 vedomostTempSave.ProjectSaved();
 
+                
+                
+
                 //Записываем состояние галочек параметров экспорта в pdf
                 ParameterItem parameterItem = new ParameterItem();
                 parameterItem.name = "isListRegistrChecked";
@@ -2485,6 +2501,14 @@ namespace DocGOST
                 if (startFromSecondCheckBox.IsChecked == true) parameterItem.value = "true";
                 else parameterItem.value = "false";
                 project.SaveParameterItem(parameterItem);
+               
+
+                parameterItem.name = "isPcbMultilayer";
+                if (isPcbMultilayer == true) parameterItem.value = "true";
+                else parameterItem.value = "false";
+                parameterItem.value = "true";
+                project.SaveParameterItem(parameterItem);
+
             }
         }
 
@@ -2500,6 +2524,7 @@ namespace DocGOST
                 DisplayAllValues();
             }
         }
+
 
         /// <summary> Возврат действия </summary>
         private void RedoButton_Click(object sender, RoutedEventArgs e)

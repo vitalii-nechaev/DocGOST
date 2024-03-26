@@ -132,6 +132,6 @@
                 <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
                 <Button ToolTip = "Приступить к импорту данных"  Click="Accept_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
             </WrapPanel>
-        </Grid>
+        </Grid>       
     </Grid>
 </Window>
