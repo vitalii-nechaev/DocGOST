@@ -2505,8 +2505,7 @@ namespace DocGOST
 
                 parameterItem.name = "isPcbMultilayer";
                 if (isPcbMultilayer == true) parameterItem.value = "true";
-                else parameterItem.value = "false";
-                parameterItem.value = "true";
+                else parameterItem.value = "false";                
                 project.SaveParameterItem(parameterItem);
 
             }

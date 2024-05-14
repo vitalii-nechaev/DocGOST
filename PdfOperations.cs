@@ -669,6 +669,8 @@ namespace DocGOST
             table1.TotalWidth = 70 * mm_A4;
             table1.LockedWidth = true;
 
+            
+
             //Определяем, сколько строчек нужно для наименования изделия:
             int kolvoStrGg1 = 2;
 
@@ -692,6 +694,8 @@ namespace DocGOST
 
             naimenovanieStr = new string[kolvoStrGg1];
             for (int i = 0; i < kolvoStrGg1; i++) naimenovanieStr[i] = String.Empty;
+
+
 
             int curStrNum = 0;
             string[] naimenovanieStrings = gr1aText.Split(' ');
@@ -882,6 +886,30 @@ namespace DocGOST
             currentCell.Phrase = new Phrase(gr4cText, normal);
             table4.AddCell(currentCell);
             table4.WriteSelectedRows(0, 1, 155 * mm_A4, 25 * mm_A4, cb);
+            #endregion
+
+            #region Рисование графы 9           
+            PdfPTable table9 = new PdfPTable(1);
+            table9.TotalWidth = 50 * mm_A4;
+            table9.LockedWidth = true;
+
+
+            // Заполнение графы 9:
+            string gr9Text = String.Empty;
+            if (docType == DocType.Specification) gr9Text = project.GetOsnNadpisItem("9").specificationValue;
+            if (docType == DocType.Perechen) gr9Text = project.GetOsnNadpisItem("9").perechenValue;
+            if (docType == DocType.PcbSpecification) gr9Text = project.GetOsnNadpisItem("9").pcbSpecificationValue;
+
+            currentCell = new PdfPCell(new Phrase(gr9Text, veryBig));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingBottom = 6;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 15 * mm_A4;
+            table9.AddCell(currentCell);
+            table9.WriteSelectedRows(0, 1, 155 * mm_A4, 20 * mm_A4, cb);
             #endregion
 
             #region Рисование таблицы с графами 10-18
@@ -1148,10 +1176,14 @@ namespace DocGOST
             table1.TotalWidth = 70 * mm_A3;
             table1.LockedWidth = true;
 
+            
+
             //Определяем, сколько строчек нужно для наименования изделия:
+
             int kolvoStrGg1 = 2;
             int naimenovaieMaxLength = 25;
-            string naimenovanieStr1 = "", naimenovanieStr2 = "";
+            string[] naimenovanieStr = new string[kolvoStrGg1];
+            for (int i = 0; i < kolvoStrGg1; i++) naimenovanieStr[i] = String.Empty;
             string gr1aText = String.Empty;
             if (docType == DocType.Specification) gr1aText = project.GetOsnNadpisItem("1a").specificationValue;
             if (docType == DocType.Perechen) gr1aText = project.GetOsnNadpisItem("1a").perechenValue;
@@ -1159,15 +1191,19 @@ namespace DocGOST
 
             if (gr1aText.Length > naimenovaieMaxLength)
             {
-                kolvoStrGg1 = 3;
-
-
+                kolvoStrGg1 = 3;                
+                
+                int curStrNum = 0;
                 string[] naimenovanieStrings = gr1aText.Split(' ');
                 foreach (string currentString in naimenovanieStrings)
                 {
-                    if (naimenovanieStr1.Length + currentString.Length + 1 < naimenovaieMaxLength) naimenovanieStr1 += currentString + " ";
-                    else naimenovanieStr2 += currentString + " ";
-                }
+                    if (naimenovanieStr[curStrNum].Length + currentString.Length + 1 < naimenovaieMaxLength) naimenovanieStr[curStrNum] += currentString + " ";
+                    else
+                    {
+                        curStrNum += 1;
+                        naimenovanieStr[curStrNum] += currentString + " ";
+                    }
+                }               
             }
 
             // Заполнение графы 1:
@@ -1196,7 +1232,7 @@ namespace DocGOST
             }
             else
             {
-                currentCell = new PdfPCell(new Phrase(naimenovanieStr1, big));
+                currentCell = new PdfPCell(new Phrase(naimenovanieStr[0], big));
                 currentCell.BorderWidth = 1;
                 currentCell.DisableBorderSide(Rectangle.BOTTOM_BORDER);
                 currentCell.HasFixedHeight();
@@ -1206,7 +1242,7 @@ namespace DocGOST
                 currentCell.FixedHeight = 10 * mm_A3;
                 table1.AddCell(currentCell);
                 table1.WriteSelectedRows(0, 1, 295 * mm_A3, 30 * mm_A3, cb);
-                currentCell.Phrase = new Phrase(naimenovanieStr2, big);
+                currentCell.Phrase = new Phrase(naimenovanieStr[1], big);
                 currentCell.DisableBorderSide(Rectangle.TOP_BORDER);
                 currentCell.FixedHeight = 10 * mm_A3;
                 table1.AddCell(currentCell);
@@ -1315,6 +1351,30 @@ namespace DocGOST
             currentCell.Phrase = new Phrase(gr4cText, normal);
             table4.AddCell(currentCell);
             table4.WriteSelectedRows(0, 1, 365 * mm_A3, 25 * mm_A3, cb);
+            #endregion
+
+            #region Рисование графы 9           
+            PdfPTable table9 = new PdfPTable(1);
+            table9.TotalWidth = 50 * mm_A3;
+            table9.LockedWidth = true;
+
+
+            // Заполнение графы 9:
+            string gr9Text = String.Empty;
+            if (docType == DocType.Specification) gr9Text = project.GetOsnNadpisItem("9").specificationValue;
+            if (docType == DocType.Perechen) gr9Text = project.GetOsnNadpisItem("9").perechenValue;
+            if (docType == DocType.Vedomost) gr9Text = project.GetOsnNadpisItem("9").vedomostValue;
+
+            currentCell = new PdfPCell(new Phrase(gr9Text, veryBig));
+            currentCell.BorderWidth = 1;
+            currentCell.HasFixedHeight();
+            currentCell.Padding = 0;
+            currentCell.PaddingBottom = 6;
+            currentCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            currentCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            currentCell.FixedHeight = 15 * mm_A3;
+            table9.AddCell(currentCell);
+            table9.WriteSelectedRows(0, 1, 365 * mm_A3, 20 * mm_A3, cb);
             #endregion
 
             #region Рисование таблицы с графами 10-18
