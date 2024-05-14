@@ -11,7 +11,7 @@
 ```
 git clone git://github.com/vitalii-nechaev/DocGOST.git
 ```
-Компиляция производится в Visual Studio 2017.
+Компиляция производится в Visual Studio 2022.
 # License
 DocGOST is under AGPL license. See License.md file. This program uses iTextSharp, which source code is available at https://github.com/itext/itextsharp. 
 For more information about iText, please refer to http://itextpdf.com.
