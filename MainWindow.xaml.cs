@@ -29,6 +29,7 @@ using Microsoft.Win32;
 using DocGOST.Data;
 using System.Windows.Media;
 using iTextSharp.text.pdf.parser;
+using System.Diagnostics.Eventing.Reader;
 
 namespace DocGOST
 {
@@ -105,57 +106,69 @@ namespace DocGOST
 
             if (createDlg.ShowDialog() == true)
             {
-                projectPath = createDlg.FileName;
-                //Удаляем все элементы из дерева проектов
-                for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
-                    projectTreeViewItem.Items.RemoveAt(i);
-                //Называем проект в дереве проектов так же, как файл
-                int length = createDlg.SafeFileName.Length;
-                projectTreeViewItem.Header = createDlg.SafeFileName.Substring(0, length - 8);
-
-                TreeViewItem apparatItem = new TreeViewItem();
-                apparatItem.Header = "Исполнение: [No Variations]";
-                apparatItem.Name = "apparatusTreeItem1";
-
-                TreeViewItem docItem = new TreeViewItem();
-                docItem.Header = "Перечень элементов";
-                docItem.IsSelected = true;
-                docItem.Selected += treeSelectionChanged;
-                apparatItem.Items.Add(docItem);
-                docItem = new TreeViewItem();
-                docItem.Header = "Спецификация";
-                docItem.Selected += treeSelectionChanged;
-                apparatItem.Items.Add(docItem);
-                docItem = new TreeViewItem();
-                docItem.Header = "Ведомость";
-                docItem.Selected += treeSelectionChanged;
-                apparatItem.Items.Add(docItem);
-                docItem = new TreeViewItem();
-                docItem.Header = "Спецификация ПП";
-                docItem.Selected += treeSelectionChanged;
-                apparatItem.Items.Add(docItem);
-                projectTreeViewItem.Items.Add(apparatItem);
-
-                projectTreeViewItem.ExpandSubtree();
-
-                if (File.Exists(projectPath))
-                {
-                    File.Delete(projectPath);
+                if (projectPath == createDlg.FileName)
+                {                   
+                    MessageBox.Show("Выбранный проект уже открыт!");                    
                 }
+                else
+                {
+                    projectPath = createDlg.FileName;
+                    //Удаляем все элементы из дерева проектов
+                    for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
+                        projectTreeViewItem.Items.RemoveAt(i);
+                    //Называем проект в дереве проектов так же, как файл
+                    int length = createDlg.SafeFileName.Length;
+                    projectTreeViewItem.Header = createDlg.SafeFileName.Substring(0, length - 8);
 
-                project = new ProjectDB(projectPath);
+                    TreeViewItem apparatItem = new TreeViewItem();
+                    apparatItem.Header = "Исполнение: [No Variations]";
+                    apparatItem.Name = "apparatusTreeItem1";
 
-                //Очищаем рабочую область от предыдущих значений
-                DisplayPerValues(null);
-                DisplaySpecValues(null);
-                DisplayVedomostValues(null);
-                DisplayPcbSpecValues(null);
+                    TreeViewItem docItem = new TreeViewItem();
+                    docItem.Header = "Перечень элементов";
+                    docItem.IsSelected = true;
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    docItem = new TreeViewItem();
+                    docItem.Header = "Спецификация";
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    docItem = new TreeViewItem();
+                    docItem.Header = "Ведомость";
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    docItem = new TreeViewItem();
+                    docItem.Header = "Спецификация ПП";
+                    docItem.Selected += treeSelectionChanged;
+                    apparatItem.Items.Add(docItem);
+                    projectTreeViewItem.Items.Add(apparatItem);
 
-                importMenuItem.IsEnabled = true;
-                osnNadpisMenuItem.IsEnabled = true;
-                osnNadpisButton.IsEnabled = true;
+                    projectTreeViewItem.ExpandSubtree();
 
-                CreateEmptyProject();
+                    if (File.Exists(projectPath))
+                    {
+                        File.Delete(projectPath);
+                    }
+
+                    project = new ProjectDB(projectPath);
+
+                    //Очищаем рабочую область от предыдущих значений
+                    DisplayPerValues(null);
+                    DisplaySpecValues(null);
+                    DisplayVedomostValues(null);
+                    DisplayPcbSpecValues(null);
+
+                    importMenuItem.IsEnabled = true;
+                    importGroupBox.IsEnabled = true;
+                    osnNadpisMenuItem.IsEnabled = true;
+                    projectOptionsGroupBox.IsEnabled = true;
+
+                    createOpenGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
+
+                    prjOptionsMenuItem.IsEnabled = true;
+
+                    CreateEmptyProject();
+                }
             }
 
         }
@@ -206,173 +219,205 @@ namespace DocGOST
             openDlg.Filter = "Файлы проекта (*.docGOST)|*.docGOST";
             if (openDlg.ShowDialog() == true)
             {
-
-
-                MessageBoxResult closingDialogResult = MessageBoxResult.No;
-                if ((perTempSave != null) & (specTempSave != null) & (pcbSpecTempSave != null) & (vedomostTempSave != null))
+                if (projectPath == openDlg.FileName)
                 {
-                    if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
-                    (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
-                    (pcbSpecTempSave.GetCurrent() != pcbSpecTempSave.GetLastSavedState()) |
-                    (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
-                    {
-                        closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNoCancel);
-                        if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent(), pcbSpecTempSave.GetCurrent());
-                    }
-                    project.DeleteTempData();
+                    waitMessageLabel.Content = "Пожалуйста, подождите...";
+                    MessageBox.Show("Выбранный проект уже открыт!");                    
+                    waitGrid.Visibility = Visibility.Hidden;
                 }
-
-                if (closingDialogResult != MessageBoxResult.Cancel)
-                {
-
-
-                    projectPath = openDlg.FileName;
-                    project = new Data.ProjectDB(projectPath);
-
-                    perTempSave = new TempSaves();
-                    specTempSave = new TempSaves();
-                    vedomostTempSave = new TempSaves();
-                    pcbSpecTempSave = new TempSaves();
-
-                    //Удаляем все элементы из дерева проектов
-                    for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
-                        projectTreeViewItem.Items.RemoveAt(i);
-                    //Называем проект в дереве проектов так же, как файл
-                    int length = openDlg.SafeFileName.Length;
-                    projectTreeViewItem.Header = openDlg.SafeFileName.Substring(0, length - 8);
-
-                    //Читаем из свойств проекта название исполнения
-                    string variantName = String.Empty;
-
-                    if (project.GetParameterItem("Variant") != null)
+                else
+                {                    
+                    MessageBoxResult closingDialogResult = MessageBoxResult.No;
+                    if ((perTempSave != null) & (specTempSave != null) & (pcbSpecTempSave != null) & (vedomostTempSave != null))
                     {
-                        variantName = project.GetParameterItem("Variant").value;
+                        if ((perTempSave.GetCurrent() != perTempSave.GetLastSavedState()) |
+                        (specTempSave.GetCurrent() != specTempSave.GetLastSavedState()) |
+                        (pcbSpecTempSave.GetCurrent() != pcbSpecTempSave.GetLastSavedState()) |
+                        (vedomostTempSave.GetCurrent() != vedomostTempSave.GetLastSavedState()))
+                        {
+                            closingDialogResult = MessageBox.Show("Проект не сохранён. Сохранить проект перед закрытием?", "Сохранение проекта", MessageBoxButton.YesNoCancel);
+                            if (closingDialogResult == MessageBoxResult.Yes) project.Save(perTempSave.GetCurrent(), specTempSave.GetCurrent(), vedomostTempSave.GetCurrent(), pcbSpecTempSave.GetCurrent());
+                        }
+                        project.DeleteTempData();
                     }
-                    else variantName = "[No Variations]";
 
-                    if (project.GetParameterItem("isPcbMultilayer") != null)
+                    if (closingDialogResult != MessageBoxResult.Cancel)
                     {
-                        if (project.GetParameterItem("isPcbMultilayer").value.ToLower() == "true")
-                            isPcbMultilayer = true;
-                    }
-                    else //если "false"
-                        isPcbMultilayer = false;
+                        projectPath = openDlg.FileName;
+                        project = new Data.ProjectDB(projectPath);
+
+                        perTempSave = new TempSaves();
+                        specTempSave = new TempSaves();
+                        vedomostTempSave = new TempSaves();
+                        pcbSpecTempSave = new TempSaves();
+
+                        //Удаляем все элементы из дерева проектов
+                        for (int i = 0; i < projectTreeViewItem.Items.Count; i++)
+                            projectTreeViewItem.Items.RemoveAt(i);
+                        //Называем проект в дереве проектов так же, как файл
+                        int length = openDlg.SafeFileName.Length;
+                        projectTreeViewItem.Header = openDlg.SafeFileName.Substring(0, length - 8);
+
+                        //Читаем из свойств проекта название исполнения
+                        string variantName = String.Empty;
+
+                        if (project.GetParameterItem("Variant") != null)
+                        {
+                            variantName = project.GetParameterItem("Variant").value;
+                        }
+                        else variantName = "[No Variations]";
+
+                        if (project.GetParameterItem("isPcbMultilayer") != null)
+                        {
+                            if (project.GetParameterItem("isPcbMultilayer").value.ToLower() == "true")
+                                isPcbMultilayer = true;
+                        }
+                        else //если "false"
+                            isPcbMultilayer = false;
 
 
-                    //Заполняем дерево проекта
-                    TreeViewItem apparatItem = new TreeViewItem();
-                    apparatItem.Header = "Исполнение: " + variantName;
-                    apparatItem.Name = "apparatusTereeItem1";
+                        //Заполняем дерево проекта
+                        TreeViewItem apparatItem = new TreeViewItem();
+                        apparatItem.Header = "Исполнение: " + variantName;
+                        apparatItem.Name = "apparatusTereeItem1";
 
-                    TreeViewItem docItem = new TreeViewItem();
-                    docItem.Header = "Перечень элементов";
-                    docItem.IsSelected = true;
-                    docItem.Selected += treeSelectionChanged;
-                    apparatItem.Items.Add(docItem);
-                    docItem = new TreeViewItem();
-                    docItem.Header = "Спецификация";
-                    docItem.Selected += treeSelectionChanged;
-                    apparatItem.Items.Add(docItem);
-                    docItem = new TreeViewItem();
-                    docItem.Header = "Ведомость";
-                    docItem.Selected += treeSelectionChanged;
-                    apparatItem.Items.Add(docItem);
-
-                    if (isPcbMultilayer == true)
-                    {
-                        docItem = new TreeViewItem();
-                        docItem.Header = "Спецификация ПП";
+                        TreeViewItem docItem = new TreeViewItem();
+                        docItem.Header = "Перечень элементов";
+                        docItem.IsSelected = true;
                         docItem.Selected += treeSelectionChanged;
                         apparatItem.Items.Add(docItem);
-                    }
+                        docItem = new TreeViewItem();
+                        docItem.Header = "Спецификация";
+                        docItem.Selected += treeSelectionChanged;
+                        apparatItem.Items.Add(docItem);
+                        docItem = new TreeViewItem();
+                        docItem.Header = "Ведомость";
+                        docItem.Selected += treeSelectionChanged;
+                        apparatItem.Items.Add(docItem);
 
-                    projectTreeViewItem.Items.Add(apparatItem);
+                        if (isPcbMultilayer == true)
+                        {
+                            docItem = new TreeViewItem();
+                            docItem.Header = "Спецификация ПП";
+                            docItem.Selected += treeSelectionChanged;
+                            apparatItem.Items.Add(docItem);
+                        }
 
-                    projectTreeViewItem.ExpandSubtree();
+                        projectTreeViewItem.Items.Add(apparatItem);
 
-
-                    //Устанавливаем состояние флажков параметров экспорта в pdf
-                    if (project.GetParameterItem("isListRegistrChecked") == null)
-                        addListRegistrCheckBox.IsChecked = true;
-                    else if (project.GetParameterItem("isListRegistrChecked").value == "true")
-                        addListRegistrCheckBox.IsChecked = true;
-                    else //если "false"
-                        addListRegistrCheckBox.IsChecked = false;
-
-
-                    if (project.GetParameterItem("isStartFromSecondChecked") == null)
-                        startFromSecondCheckBox.IsChecked = false;
-                    else if (project.GetParameterItem("isStartFromSecondChecked").value == "false")
-                        startFromSecondCheckBox.IsChecked = false;
-                    else //если "true"
-                        startFromSecondCheckBox.IsChecked = true;
+                        projectTreeViewItem.ExpandSubtree();
 
 
-                    //Копируем данные во временные
-                    perTempSave = new TempSaves();
-                    for (int i = 1; i <= project.GetPerechenLength(0); i++)
-                    {
-                        PerechenItem perItem = new PerechenItem();
-                        perItem = project.GetPerechenItem(i, 0);
-                        perItem.id = id.makeID(i, perTempSave.GetCurrent());
-                        project.AddPerechenItem(perItem);
-                    }
-                    perTempSave.ProjectSaved();
+                        //Устанавливаем состояние флажков параметров экспорта в pdf
+                        if (project.GetParameterItem("isListRegistrChecked") == null)
+                            addListRegistrCheckBox.IsChecked = true;
+                        else if (project.GetParameterItem("isListRegistrChecked").value == "true")
+                            addListRegistrCheckBox.IsChecked = true;
+                        else //если "false"
+                            addListRegistrCheckBox.IsChecked = false;
 
-                    for (int i = 1; i <= project.GetSpecLength(0); i++)
-                    {
-                        SpecificationItem specItem = new SpecificationItem();
-                        specItem = project.GetSpecItem(i, 0);
-                        specItem.id = id.makeID(i, specTempSave.GetCurrent());
-                        project.AddSpecItem(specItem);
-                    }
-                    specTempSave.ProjectSaved();
 
-                    for (int i = 1; i <= project.GetVedomostLength(0); i++)
-                    {
-                        VedomostItem vedomostItem = new VedomostItem();
-                        vedomostItem = project.GetVedomostItem(i, 0);
-                        vedomostItem.id = id.makeID(i, specTempSave.GetCurrent());
-                        project.AddVedomostItem(vedomostItem);
-                    }
-                    vedomostTempSave.ProjectSaved();
+                        if (project.GetParameterItem("isStartFromSecondChecked") == null)
+                            startFromSecondCheckBox.IsChecked = false;
+                        else if (project.GetParameterItem("isStartFromSecondChecked").value == "false")
+                            startFromSecondCheckBox.IsChecked = false;
+                        else //если "true"
+                            startFromSecondCheckBox.IsChecked = true;
+                        
+                        //Копируем данные во временные
+                        perTempSave = new TempSaves();
+                                                
+                        int tempLength = project.GetPerechenLength(0);
+                        if (tempLength > 0)
+                        {
+                            importGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
+                            projectOptionsGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
+                        }
+                        else
+                        {
+                            importGroupBox.BorderBrush = new SolidColorBrush(Colors.LightGray);
+                            projectOptionsGroupBox.BorderBrush = new SolidColorBrush(Colors.LightGray);
+                        }
 
-                    if (isPcbMultilayer)
-                    {
+                        for (int i = 1; i <= tempLength; i++)
+                        {
+                            PerechenItem perItem = new PerechenItem();
+                            perItem = project.GetPerechenItem(i, 0);
+                            perItem.id = id.makeID(i, perTempSave.GetCurrent());
+                            project.AddPerechenItem(perItem);                            
+                        }
+                        perTempSave.ProjectSaved();
 
-                        for (int i = 1; i <= project.GetPcbSpecLength(0); i++)
+                       
+                        tempLength = project.GetSpecLength(0);
+
+                        for (int i = 1; i <= tempLength; i++)
+                        {
+                            SpecificationItem specItem = new SpecificationItem();
+                            specItem = project.GetSpecItem(i, 0);
+                            specItem.id = id.makeID(i, specTempSave.GetCurrent());
+                            project.AddSpecItem(specItem);
+                        }
+                        specTempSave.ProjectSaved();
+
+                       
+                        tempLength = project.GetVedomostLength(0);
+
+                        for (int i = 1; i <= tempLength; i++)
+                        {
+                            VedomostItem vedomostItem = new VedomostItem();
+                            vedomostItem = project.GetVedomostItem(i, 0);
+                            vedomostItem.id = id.makeID(i, specTempSave.GetCurrent());
+                            project.AddVedomostItem(vedomostItem);
+                        }
+                        vedomostTempSave.ProjectSaved();
+
+                        waitMessageLabel.Content = "Подождите, проект открывается. Это может занять несколько минут... 90%";
+
+                        if (isPcbMultilayer)
+                        {
+                            tempLength = project.GetPcbSpecLength(0);
+
+                            for (int i = 1; i <= tempLength; i++)
+                            {
+                                PcbSpecificationItem specItem = new PcbSpecificationItem();
+                                specItem = project.GetPcbSpecItem(i, 0);
+                                specItem.id = id.makeID(i, pcbSpecTempSave.GetCurrent());
+                                project.AddPcbSpecItem(specItem);
+                            }
+                            pcbSpecTempSave.ProjectSaved();
+                        }
+                        else
                         {
                             PcbSpecificationItem specItem = new PcbSpecificationItem();
-                            specItem = project.GetPcbSpecItem(i, 0);
-                            specItem.id = id.makeID(i, pcbSpecTempSave.GetCurrent());
+                            specItem.id = id.makeID(0, pcbSpecTempSave.GetCurrent());
                             project.AddPcbSpecItem(specItem);
+
+                            //((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                         }
-                        pcbSpecTempSave.ProjectSaved();
+
+
+
+                        DisplayAllValues();
+
+                        importMenuItem.IsEnabled = true;
+                        importGroupBox.IsEnabled = true;
+                        saveProjectMenuItem.IsEnabled = true;
+                        undoMenuItem.IsEnabled = true;
+                        redoMenuItem.IsEnabled = true;
+                        createPdfMenuItem.IsEnabled = true;
+                        CreatePdfButton.IsEnabled = true;
+                        osnNadpisMenuItem.IsEnabled = true;
+                        projectOptionsGroupBox.IsEnabled = true;
+
+                        createOpenGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
+
+                        prjOptionsMenuItem.IsEnabled = true;
                     }
-                    else
-                    {
-                        PcbSpecificationItem specItem = new PcbSpecificationItem();
-                        specItem.id = id.makeID(0, pcbSpecTempSave.GetCurrent());
-                        project.AddPcbSpecItem(specItem);
+                    waitMessageLabel.Content = "Пожалуйста, подождите...";
+                    waitGrid.Visibility = Visibility.Hidden;
 
-                        //((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
-                    }
-
-
-
-                    DisplayAllValues();
-
-                    importMenuItem.IsEnabled = true;
-                    saveProjectMenuItem.IsEnabled = true;
-                    undoMenuItem.IsEnabled = true;
-                    redoMenuItem.IsEnabled = true;
-                    createPdfMenuItem.IsEnabled = true;
-                    osnNadpisMenuItem.IsEnabled = true;
-                    osnNadpisButton.IsEnabled = true;
-
-                }
-                waitMessageLabel.Content = "Пожалуйста, подождите...";
-                waitGrid.Visibility = Visibility.Hidden;
+                }                
             }
             else
             {
@@ -395,6 +440,7 @@ namespace DocGOST
             List<ComponentProperties> otherPropList = new List<ComponentProperties>();
 
             createPdfMenuItem.IsEnabled = true;
+            CreatePdfButton.IsEnabled = true;
 
             List<PerechenItem> perechenList = new List<PerechenItem>();
             List<SpecificationItem> specList = new List<SpecificationItem>();
@@ -518,6 +564,32 @@ namespace DocGOST
                 project.AddPcbSpecItem(sd);
             }
 
+            importGroupBox.BorderBrush = new SolidColorBrush(Colors.LightGray);
+            projectOptionsGroupBox.BorderBrush = new SolidColorBrush(Colors.LightGray);
+        }
+
+        private void globalExportSettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsOfExport settingsOfExport = new SettingsOfExport();
+            settingsOfExport.ShowDialog();
+        }
+
+        private void globalImportSettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsOfImport settingsOfImport = new SettingsOfImport();
+            settingsOfImport.ShowDialog();
+        }
+
+        private void globalDocumsSettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            DocumsWindow documsWindow = new DocumsWindow(false);
+            documsWindow.ShowDialog();
+        }
+
+        private void globalDocumsPcbSettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            DocumsWindow docums4PcbWindow = new DocumsWindow(true);
+            docums4PcbWindow.ShowDialog();
         }
 
         private void ImportPrjPcbfromAD_Click(object sender, RoutedEventArgs e)
@@ -550,8 +622,6 @@ namespace DocGOST
         /// <summary> Импорт данных из проекта Altium Designer (.PrjPcb) </summary>
         private void ImportPrjPcbfromAD(string pcbPrjFilePath)
         {
-
-
             perTempSave = new TempSaves();
             specTempSave = new TempSaves();
             vedomostTempSave = new TempSaves();
@@ -739,7 +809,16 @@ namespace DocGOST
                         schPath = System.IO.Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
 
                         //Открываем файл схемы AD для получения списка параметров электронных компонентов:
-                        FileStream schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+                        FileStream schFile;
+                        try
+                        {
+                            schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Файл схемы не найден. Видимо, проект KiCad не был сохранён. Далее последует экстренное завершение программы.", "Критическая ошибка!");
+                        }
+                        schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
                         StreamReader schReader = new StreamReader(schFile, System.Text.Encoding.Default);
 
                         string schStr = String.Empty;
@@ -832,7 +911,18 @@ namespace DocGOST
                         string pcbPath = System.IO.Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
 
                         //Открываем файл платы AD для получения данных:
-                        FileStream pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
+                        FileStream pcbFile;                        
+                        try
+                        {
+                            pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
+                           
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Не удаётся открыть файл платы. Видимо, проект Альтиум не был сохранён. Теперь последует экстренное завершение программы.", "Критическая ошибка!");
+                        }
+
+                        pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
                         StreamReader pcbReader = new StreamReader(pcbFile, System.Text.Encoding.Default);
 
                         string pcbStr = String.Empty;
@@ -949,7 +1039,8 @@ namespace DocGOST
                             parameterItem.value = "false";
                             project.SaveParameterItem(parameterItem);
                             plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
-                            ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
+                            if (((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count == 4) //если есть спецификация печатной платы, удаляем её
+                                ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
                         }
                         pcbReader.Close();
                     }
@@ -983,50 +1074,79 @@ namespace DocGOST
             string defaultNamePropName = "PartNumber";
             string defaultDocumPropName = "Manufacturer";
             string defaultNotePropName = "Note";
+                        
+                      
+
+            
+
 
             #region Считывание наименований параметров компонентов из базы данных
             SettingsItem propNameItem = new SettingsItem();
             SettingsDB settingsDB = new SettingsDB();
 
-            //Чтение наименования свойства с позиционным обозначением
+            // Чтение наименования свойства с позиционным обозначением
             if (settingsDB.GetItem("designatorPropName") == null)
             {
                 propNameItem.name = "designatorPropName";
-                propNameItem.valueString = "Designator";
+                propNameItem.valueString = defaultDesignatorPropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
             else propNameItem = settingsDB.GetItem("designatorPropName");
             defaultDesignatorPropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с наименованием компонента
+            // Чтение наименования свойства с наименованием компонента
             if (settingsDB.GetItem("namePropName") == null)
             {
                 propNameItem.name = "namePropName";
-                propNameItem.valueString = "PartNumber";
+                propNameItem.valueString = defaultNamePropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
             else propNameItem = settingsDB.GetItem("namePropName");
             defaultNamePropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с документом на поставку компонента
+            // Чтение наименования свойства с документом на поставку компонента
             if (settingsDB.GetItem("documPropName") == null)
             {
                 propNameItem.name = "documPropName";
-                propNameItem.valueString = "Manufacturer";
+                propNameItem.valueString = defaultDocumPropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
             else propNameItem = settingsDB.GetItem("documPropName");
             defaultDocumPropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с комментарием
+            // Чтение наименования свойства с комментарием
             if (settingsDB.GetItem("notePropName") == null)
             {
                 propNameItem.name = "notePropName";
-                propNameItem.valueString = "Note";
+                propNameItem.valueString = defaultNotePropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
             else propNameItem = settingsDB.GetItem("notePropName");
             defaultNotePropName = propNameItem.valueString;
+
+            
+           
+
+            /*// Чтение наименования свойства с децимальным номером платы
+            if (settingsDB.GetItem("prjPcbNumberPropName") == null)
+            {
+                propNameItem.name = "prjPcbNumberPropName";
+                propNameItem.valueString = defaultPcbDocNumberPropName;
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("prjPcbNumberPropName");
+            defaultNotePropName = propNameItem.valueString;
+
+            // Чтение наименования свойства с фамилией разработчика
+            if (settingsDB.GetItem("drawnByPropName") == null)
+            {
+                propNameItem.name = "drawnByPropName";
+                propNameItem.valueString = defaultPrjNameStr2PropName;
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("drawnByPropName");
+            defaultPrjNameStr2PropName = propNameItem.valueString;*/
+
             #endregion
 
 
@@ -1071,12 +1191,17 @@ namespace DocGOST
 
             importPcbPrjWindow.prjParamsVariantList = prjParamsVariantList;
 
+            importPcbPrjWindow.isAltiumProject = true;
+
 
             if (importPcbPrjWindow.ShowDialog() == true)
             {
+                importGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
 
                 #region Заполнение списков для базы данных проекта
+
                 createPdfMenuItem.IsEnabled = true;
+                CreatePdfButton.IsEnabled = true;
 
                 List<PerechenItem> perechenList = new List<PerechenItem>();
                 List<SpecificationItem> specList = new List<SpecificationItem>();
@@ -1085,82 +1210,51 @@ namespace DocGOST
 
                 int numberOfValidStrings = 0;
 
-                SpecificationItem tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " СБ";
-                tempSpecItem.name = "Сборочный чертёж";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
+                DocumsDB documsDB = new DocumsDB(false);
 
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Э3";
-                tempSpecItem.name = "Схема электрическая принципиальная";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А4";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " ПЭ3";
-                tempSpecItem.name = "Перечень элементов";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                plataSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text;
-                plataSpecItem.name = "Плата печатная";
-
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А3";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " ВП";
-                tempSpecItem.name = "Ведомость покупных изделий";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                /*tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "*)";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Д33";
-                tempSpecItem.name = "Данные проектирования модуля";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.note = "*) CD-диск";
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);*/
+                int length = documsDB.GetLength();
+                 
+                for (int i = 1; i <= length; i++)
+                {
+                    DocumsItem docItem = documsDB.GetItem(i);
+                    
+                    SpecificationItem tempSpecItem = new SpecificationItem();
+                    numberOfValidStrings++;
+                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    tempSpecItem.format = docItem.format;
+                    tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " " + docItem.code;
+                    tempSpecItem.name = docItem.name;
+                    tempSpecItem.quantity = String.Empty;
+                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    specList.Add(tempSpecItem);
+                }
+                                
 
                 project = new Data.ProjectDB(projectPath);
 
-                PcbSpecificationItem tempPcbSpecItem = new PcbSpecificationItem();
-                tempPcbSpecItem.id = id.makeID(1, specTempSave.GetCurrent());
-                tempPcbSpecItem.format = "А1";
-                tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " СБ";
-                tempPcbSpecItem.name = "Сборочный чертёж";
-                tempPcbSpecItem.quantity = String.Empty;
-                tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
-                pcbSpecList.Add(tempPcbSpecItem);
+                DocumsDB documsPcbDB = new DocumsDB(true);
 
-                tempPcbSpecItem = new PcbSpecificationItem();
-                tempPcbSpecItem.id = id.makeID(2, specTempSave.GetCurrent());
-                tempPcbSpecItem.format = "*)";
-                tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " Т5М";
-                tempPcbSpecItem.name = "Данные проектирования";
-                tempPcbSpecItem.quantity = String.Empty;
-                tempPcbSpecItem.note = "*) CD-диск";
-                tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
-                pcbSpecList.Add(tempPcbSpecItem);
+                length = documsPcbDB.GetLength();
 
-                int index = 3;
+                PcbSpecificationItem tempPcbSpecItem;
+
+                int index = 1;
+
+                for (int i = 1; i <= length; i++)
+                {
+                    DocumsItem docItem = documsPcbDB.GetItem(i);
+                    tempPcbSpecItem = new PcbSpecificationItem();
+
+                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                    tempPcbSpecItem.format = docItem.format;
+                    tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
+                    tempPcbSpecItem.name = docItem.name;
+                    tempPcbSpecItem.quantity = String.Empty;
+                    tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    pcbSpecList.Add(tempPcbSpecItem);
+                    index++;
+                }
+
                 int coreQuantity = 0; //кол-во ядер в стеке платы
                 foreach (DielProperties pcbMaterialItem in pcbMaterialsList)
                 {
@@ -1214,6 +1308,15 @@ namespace DocGOST
                     project.AddPcbSpecItem(sd);
                 }
 
+                // Наименование изделия:
+                osnNadpisItem.grapha = "1a";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.pcbName;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Децимальный номер изделия:
                 osnNadpisItem.grapha = "2";
                 osnNadpisItem.specificationValue = importPcbPrjWindow.prjNumberTextBox.Text;
                 osnNadpisItem.perechenValue = osnNadpisItem.specificationValue + " ПЭ3";
@@ -1221,11 +1324,62 @@ namespace DocGOST
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.pcbNumberTextBox.Text;
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
+                //Первичное применение:
                 osnNadpisItem.grapha = "25";
+                osnNadpisItem.specificationValue = String.Empty;
                 osnNadpisItem.perechenValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для перечня здесь указываем спецификацию
                 osnNadpisItem.vedomostValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для ведомости здесь указываем спецификацию
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для спецификации ПП здесь указываем спецификацию
                 project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Разраб.:
+                osnNadpisItem.grapha = "11a";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.drawnBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Пров.:
+                osnNadpisItem.grapha = "11b";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.checkedBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Доп. подписант:
+                osnNadpisItem.grapha = "11с";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.dopPodpisant;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Нормоконтролёр:
+                osnNadpisItem.grapha = "11d";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.normInspection;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Утв.:
+                osnNadpisItem.grapha = "11e";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.approvedBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Наименование организации:
+                osnNadpisItem.grapha = "9";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.companyName;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
 
                 numberOfValidStrings++;
                 plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
@@ -1234,7 +1388,10 @@ namespace DocGOST
                 string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
                 string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
                 string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
+                if (documName == "<Не задано>") documName = String.Empty;
                 string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
+                if (noteName == "<Не задано>") noteName = String.Empty;
+
 
                 #region Сохранение выбранных наименований свойств комопонентов в SettingsDB
                 propNameItem = new SettingsItem();
@@ -1250,6 +1407,10 @@ namespace DocGOST
 
                 propNameItem.name = "documPropName";
                 propNameItem.valueString = documName;
+                settingsDB.SaveSettingItem(propNameItem);
+
+                propNameItem.name = "notePropName";
+                propNameItem.valueString = noteName;
                 settingsDB.SaveSettingItem(propNameItem);
 
                 propNameItem.name = "notePropName";
@@ -1466,7 +1627,7 @@ namespace DocGOST
 
             string pcbPrjFolderPath = System.IO.Path.GetDirectoryName(pcbPrjFilePath);
 
-            //Открываем файл проекта AD для чтения текстовых переменных проекта:
+            //Открываем файл проекта KiCAD для чтения текстовых переменных проекта:
             FileStream pcbPrjFile = new FileStream(pcbPrjFilePath, FileMode.Open, FileAccess.Read);
             StreamReader pcbPrjReader = new StreamReader(pcbPrjFile, System.Text.Encoding.UTF8);
 
@@ -1526,7 +1687,7 @@ namespace DocGOST
                     else
                     {
                         prjStr = prjStr.Replace("\",", String.Empty);
-                        prjStr = prjStr.Replace('"', new char());
+                        prjStr = prjStr.Replace("\"", String.Empty);
                         string[] paramPrjStrArray = prjStr.Split(new string[] { ": " }, StringSplitOptions.None);
                         int variantNumber = 0;
                         //if (paramPrjStrArray.Length > 1) variantNumber = currentVariant;
@@ -1534,8 +1695,8 @@ namespace DocGOST
 
                         string[] nameValue = new string[2];
 
-                        nameValue[0] = paramPrjStrArray[0];
-                        nameValue[1] = paramPrjStrArray[1];
+                        nameValue[0] = paramPrjStrArray[0].Trim();
+                        nameValue[1] = paramPrjStrArray[1].Trim();
 
                         while (prjParamsVariantList.Count <= variantNumber) prjParamsVariantList.Add(new List<string[]>());
 
@@ -1550,7 +1711,17 @@ namespace DocGOST
 
 
             //Открываем файл схемы KiCad для получения списка параметров электронных компонентов:
-            FileStream schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+            FileStream schFile;
+            try
+            {
+                schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
+            }
+            catch
+            {
+                MessageBox.Show("Файл схемы не найден. Видимо, проект KiCad не был сохранён. Далее последует экстренное завершение программы.", "Критическая ошибка!");
+            }
+
+            schFile = new FileStream(schPath, FileMode.Open, FileAccess.Read);
             StreamReader schReader = new StreamReader(schFile, System.Text.Encoding.UTF8);
 
             string schStr = String.Empty;
@@ -1657,7 +1828,17 @@ namespace DocGOST
             string pcbPath = System.IO.Path.GetDirectoryName(pcbPrjFilePath) + @"\" + System.IO.Path.GetFileNameWithoutExtension(pcbPrjFilePath) + ".kicad_pcb";
 
             //Открываем файл платы KiCad для получения количества слоёв платы:
-            FileStream pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
+            FileStream pcbFile;
+            try
+            {
+                pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
+            }
+            catch
+            {
+                MessageBox.Show("Файл платы не найден. Видимо, проект KiCad не был сохранён. Далее последует экстренное завершение программы.", "Критическая ошибка!");
+            }
+
+            pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
             StreamReader pcbReader = new StreamReader(pcbFile, System.Text.Encoding.UTF8);
 
             string pcbStr = String.Empty;
@@ -1733,6 +1914,7 @@ namespace DocGOST
                 parameterItem.value = "false";
                 project.SaveParameterItem(parameterItem);
                 plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
+                if (((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count == 4) //если есть спецификация печатной платы, удаляем её
                 ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
             }
             pcbReader.Close();
@@ -1742,7 +1924,7 @@ namespace DocGOST
             #endregion
 
 
-            //Записываем в новый список названия всех свойств компонентов
+            // Записываем в новый список названия всех свойств компонентов
             List<string> propNames = new List<string>();
             propNames.Add("<Не задано>");
 
@@ -1758,59 +1940,76 @@ namespace DocGOST
 
             ImportPcbPrjWindow importPcbPrjWindow = new ImportPcbPrjWindow();
 
-            string defaultDesignatorPropName = "Designator";
-            string defaultNamePropName = "PartNumber";
-            string defaultDocumPropName = "Manufacturer";
-            string defaultNotePropName = "Note";
+            string defaultKiCadDesignatorPropName = "Reference";
+            string defaultKiCadNamePropName = "PartNumber";
+            string defaultKiCadDocumPropName = "Manufacturer";
+            string defaultKiCadNotePropName = "Note";
+
 
             #region Считывание наименований параметров компонентов из базы данных
             SettingsItem propNameItem = new SettingsItem();
             SettingsDB settingsDB = new SettingsDB();
 
-            //Чтение наименования свойства с позиционным обозначением
-            if (settingsDB.GetItem("designatorPropName") == null)
+            // Чтение наименования свойства с позиционным обозначением
+            if (settingsDB.GetItem("designatorPropNameKiCad") == null)
             {
-                propNameItem.name = "designatorPropName";
-                propNameItem.valueString = "Designator";
+                propNameItem.name = "designatorPropNameKiCad";
+                propNameItem.valueString = defaultKiCadDesignatorPropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
-            else propNameItem = settingsDB.GetItem("designatorPropName");
-            defaultDesignatorPropName = propNameItem.valueString;
+            else propNameItem = settingsDB.GetItem("designatorPropNameKiCad");
+            defaultKiCadDesignatorPropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с наименованием компонента
-            if (settingsDB.GetItem("namePropName") == null)
+            // Чтение наименования свойства с наименованием компонента
+            if (settingsDB.GetItem("namePropNameKiCad") == null)
             {
-                propNameItem.name = "namePropName";
-                propNameItem.valueString = "PartNumber";
+                propNameItem.name = "namePropNameKiCad";
+                propNameItem.valueString = defaultKiCadNamePropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
-            else propNameItem = settingsDB.GetItem("namePropName");
-            defaultNamePropName = propNameItem.valueString;
+            else propNameItem = settingsDB.GetItem("namePropNameKiCad");
+            defaultKiCadNamePropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с документом на поставку компонента
-            if (settingsDB.GetItem("documPropName") == null)
+            // Чтение наименования свойства с документом на поставку компонента
+            if (settingsDB.GetItem("documPropNameKiCad") == null)
             {
-                propNameItem.name = "documPropName";
-                propNameItem.valueString = "Manufacturer";
+                propNameItem.name = "documPropNameKiCad";
+                propNameItem.valueString = defaultKiCadDocumPropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
-            else propNameItem = settingsDB.GetItem("documPropName");
-            defaultDocumPropName = propNameItem.valueString;
+            else propNameItem = settingsDB.GetItem("documPropNameKiCad");
+            defaultKiCadDocumPropName = propNameItem.valueString;
 
-            //Чтение наименования свойства с комментарием
-            if (settingsDB.GetItem("notePropName") == null)
+            // Чтение наименования свойства с комментарием
+            if (settingsDB.GetItem("notePropNameKiCad") == null)
             {
-                propNameItem.name = "notePropName";
-                propNameItem.valueString = "Note";
+                propNameItem.name = "notePropNameKiCad";
+                propNameItem.valueString = defaultKiCadNotePropName;
                 settingsDB.SaveSettingItem(propNameItem);
             }
-            else propNameItem = settingsDB.GetItem("notePropName");
-            defaultNotePropName = propNameItem.valueString;
+            else propNameItem = settingsDB.GetItem("notePropNameKiCad");
+            defaultKiCadNotePropName = propNameItem.valueString;
+
+           
+             
+            /*drawnByPropNameKiCad
+
+            // Чтение наименования свойства с фамилией разработчика
+            if (settingsDB.GetItem("drawnByPropName") == null)
+            {
+                propNameItem.name = "drawnByPropName";
+                propNameItem.valueString = defaultPrjNameStr2PropName;
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else propNameItem = settingsDB.GetItem("drawnByPropName");
+            defaultPrjNameStr2PropName = propNameItem.valueString;
+             */
+
             #endregion
 
 
             importPcbPrjWindow.designatorComboBox.ItemsSource = propNames;
-            if (propNames.Contains(defaultDesignatorPropName)) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultDesignatorPropName);
+            if (propNames.Contains(defaultKiCadDesignatorPropName)) importPcbPrjWindow.designatorComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultKiCadDesignatorPropName);
             else
             {
                 importPcbPrjWindow.designatorComboBox.SelectedIndex = 0;
@@ -1818,7 +2017,7 @@ namespace DocGOST
                 importPcbPrjWindow.nextButton.ToolTip = "Свойства \"Поз. обозначение\" и \"Наименование\" должны быть заданы";
             }
             importPcbPrjWindow.nameComboBox.ItemsSource = propNames;
-            if (propNames.Contains(defaultNamePropName)) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultNamePropName);
+            if (propNames.Contains(defaultKiCadNamePropName)) importPcbPrjWindow.nameComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultKiCadNamePropName);
             else
             {
                 importPcbPrjWindow.nameComboBox.SelectedIndex = 0;
@@ -1827,10 +2026,10 @@ namespace DocGOST
             }
 
             importPcbPrjWindow.documComboBox.ItemsSource = propNames;
-            if (propNames.Contains(defaultDocumPropName)) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultDocumPropName);
+            if (propNames.Contains(defaultKiCadDocumPropName)) importPcbPrjWindow.documComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultKiCadDocumPropName);
             else importPcbPrjWindow.documComboBox.SelectedIndex = 0;
             importPcbPrjWindow.noteComboBox.ItemsSource = propNames;
-            if (propNames.Contains(defaultNotePropName)) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultNotePropName);
+            if (propNames.Contains(defaultKiCadNotePropName)) importPcbPrjWindow.noteComboBox.SelectedIndex = propNames.FindIndex(x => x == defaultKiCadNotePropName);
             else importPcbPrjWindow.noteComboBox.SelectedIndex = 0;
 
             if (variantNameList.Count > 1)
@@ -1850,12 +2049,14 @@ namespace DocGOST
 
             importPcbPrjWindow.prjParamsVariantList = prjParamsVariantList;
 
+            importPcbPrjWindow.isAltiumProject = false; // KiCad project
 
             if (importPcbPrjWindow.ShowDialog() == true)
             {
-
+                importGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
                 #region Заполнение списков для базы данных проекта
                 createPdfMenuItem.IsEnabled = true;
+                CreatePdfButton.IsEnabled = true;
 
                 List<PerechenItem> perechenList = new List<PerechenItem>();
                 List<SpecificationItem> specList = new List<SpecificationItem>();
@@ -1864,11 +2065,24 @@ namespace DocGOST
 
                 int numberOfValidStrings = 0;
 
+                /*// Считываем список документации на изделие из базы данных, и добавляем эту документацию в спецификацию
+                DocumsDB desDescr = new DocumsDB(isDocums4Pcb);
+
+                int length = desDescr.GetLength();
+                //Вывод несгруппированных строк в окно программы:
+                List<DocumsItem> result = new List<DocumsItem>(length);
+
+                for (int i = 1; i <= length; i++)
+                {
+                    DocumsItem dd = desDescr.GetItem(i);
+                    result.Add(dd);
+                }*/
+
                 SpecificationItem tempSpecItem = new SpecificationItem();
                 numberOfValidStrings++;
                 tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " СБ";
+                tempSpecItem.format = "А3";
+                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " СБ";
                 tempSpecItem.name = "Сборочный чертёж";
                 tempSpecItem.quantity = String.Empty;
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
@@ -1877,8 +2091,8 @@ namespace DocGOST
                 tempSpecItem = new SpecificationItem();
                 numberOfValidStrings++;
                 tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Э3";
+                tempSpecItem.format = "А3";
+                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " Э3";
                 tempSpecItem.name = "Схема электрическая принципиальная";
                 tempSpecItem.quantity = String.Empty;
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
@@ -1895,7 +2109,7 @@ namespace DocGOST
                 specList.Add(tempSpecItem);
 
                 plataSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text;
-                plataSpecItem.name = "Плата печатная";
+                plataSpecItem.name = importPcbPrjWindow.pcbName;
 
                 tempSpecItem = new SpecificationItem();
                 numberOfValidStrings++;
@@ -1918,6 +2132,23 @@ namespace DocGOST
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
                 specList.Add(tempSpecItem);*/
 
+                // Считываем список документации на ПП из базы данных, и добавляем эту документацию в спецификацию на изделие,
+                // если плата однослойная или двухслойная, либо в спецификацию на ПП, если плата многослойная.
+
+                if (isPcbMultilayer==false)
+                {
+                    tempSpecItem = new SpecificationItem();
+                    numberOfValidStrings++;
+                    tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                    tempSpecItem.format = "*)";
+                    tempSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " Т5М";
+                    tempSpecItem.name = "Данные проектирования";
+                    tempSpecItem.quantity = String.Empty;
+                    tempSpecItem.note = "*) CD-диск";
+                    tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                    specList.Add(tempSpecItem);
+                }               
+                                
                 project = new Data.ProjectDB(projectPath);
 
                 PcbSpecificationItem tempPcbSpecItem = new PcbSpecificationItem();
@@ -1993,6 +2224,15 @@ namespace DocGOST
                     project.AddPcbSpecItem(sd);
                 }
 
+                // Наименование изделия:
+                osnNadpisItem.grapha = "1a";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.prjName;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.pcbName;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Децимальный номер изделия:
                 osnNadpisItem.grapha = "2";
                 osnNadpisItem.specificationValue = importPcbPrjWindow.prjNumberTextBox.Text;
                 osnNadpisItem.perechenValue = osnNadpisItem.specificationValue + " ПЭ3";
@@ -2000,10 +2240,60 @@ namespace DocGOST
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.pcbNumberTextBox.Text;
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
+                //Первичное применение:
                 osnNadpisItem.grapha = "25";
+                osnNadpisItem.specificationValue = String.Empty;
                 osnNadpisItem.perechenValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для перечня здесь указываем спецификацию
                 osnNadpisItem.vedomostValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для ведомости здесь указываем спецификацию
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для спецификации ПП здесь указываем спецификацию
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Разраб.:
+                osnNadpisItem.grapha = "11a";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.drawnBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.drawnBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Пров.:
+                osnNadpisItem.grapha = "11b";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.checkedBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.checkedBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Доп. подписант:
+                osnNadpisItem.grapha = "11с";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.dopPodpisant;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.dopPodpisant;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Нормоконтролёр:
+                osnNadpisItem.grapha = "11d";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.normInspection;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.normInspection;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Утв.:
+                osnNadpisItem.grapha = "11e";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.approvedBy;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.approvedBy;
+                project.SaveOsnNadpisItem(osnNadpisItem);
+
+                //Наименование организации:
+                osnNadpisItem.grapha = "9";
+                osnNadpisItem.specificationValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.perechenValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.vedomostValue = importPcbPrjWindow.companyName;
+                osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.companyName;
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
                 numberOfValidStrings++;
@@ -2013,25 +2303,27 @@ namespace DocGOST
                 string designatorName = importPcbPrjWindow.designatorComboBox.SelectedItem.ToString();
                 string nameName = importPcbPrjWindow.nameComboBox.SelectedItem.ToString();
                 string documName = importPcbPrjWindow.documComboBox.SelectedItem.ToString();
+                if (documName == "<Не задано>") documName = String.Empty;
                 string noteName = importPcbPrjWindow.noteComboBox.SelectedItem.ToString();
+                if (noteName == "<Не задано>") noteName = String.Empty;
 
                 #region Сохранение выбранных наименований свойств комопонентов в SettingsDB
                 propNameItem = new SettingsItem();
                 settingsDB = new SettingsDB();
 
-                propNameItem.name = "designatorPropName";
+                propNameItem.name = "designatorPropNameKiCad";
                 propNameItem.valueString = designatorName;
                 settingsDB.SaveSettingItem(propNameItem);
 
-                propNameItem.name = "namePropName";
+                propNameItem.name = "namePropNameKiCad";
                 propNameItem.valueString = nameName;
                 settingsDB.SaveSettingItem(propNameItem);
 
-                propNameItem.name = "documPropName";
+                propNameItem.name = "documPropNameKiCad";
                 propNameItem.valueString = documName;
                 settingsDB.SaveSettingItem(propNameItem);
 
-                propNameItem.name = "notePropName";
+                propNameItem.name = "notePropNameKiCad";
                 propNameItem.valueString = noteName;
                 settingsDB.SaveSettingItem(propNameItem);
                 #endregion
@@ -2076,7 +2368,9 @@ namespace DocGOST
                     }
 
                     #region В случае наличиня исполнений
+
                     bool isDNF = false;
+                    /*
                     int variantIndex = importPcbPrjWindow.variantSelectionComboBox.SelectedIndex;
                     if (variantIndex > 0)
                     {
@@ -2105,9 +2399,10 @@ namespace DocGOST
                         }
 
                     }
-
+                    */
 
                     #endregion
+                    
 
                     if (isDNF == false)
                     {
@@ -2214,16 +2509,33 @@ namespace DocGOST
         {
             int result = 0;
             if (designator.Length > 1)
-            {
+            {                
                 if (Char.IsDigit(designator[1]))
                 {
                     result = ((designator[0]) << 24) + int.Parse(designator.Substring(1, designator.Length - 1));
                 }
-                else
+                else if (designator[1] == '?')
+                {
+                    result = ((designator[0]) << 24) + 0;
+                    MessageBox.Show("В схеме есть не пронумерованный компонент " + designator);
+                }
+                else if (Char.IsDigit(designator[2]))
                 {
                     if (designator.Length >= 3)
                         result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(2, designator.Length - 2));
                 }
+                else if (designator[2] == '?')
+                {
+                    if (designator.Length >= 3)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + 0;
+                    MessageBox.Show("В схеме есть не пронумерованный компонент " + designator);
+                }
+                else if (Char.IsDigit(designator[3])) //Для комонентов с обозначением из 3 букв, например, "PCB1"
+                {
+                    if (designator.Length >= 4)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(3, designator.Length - 3));
+                }
+                
             }
 
             return result;
@@ -2460,26 +2772,198 @@ namespace DocGOST
         /// <summary> Создание PDF-файлов перечня и спецификации </summary>
         private void CreatePdf_Click(object sender, RoutedEventArgs e)
         {
-            string pdfPath = "ПЭ.pdf";
+            SettingsItem propNameItem = new SettingsItem();
+            SettingsDB settingsDB = new SettingsDB();
+            string docName = String.Empty;
+            string pcbDocName = String.Empty;
+            string docNumber = String.Empty;
+            string pcbDocNumber = String.Empty;
+
+            string folderPath = String.Empty;
+            string folderPathPcb = String.Empty;
+
+            string fileName = String.Empty;
+            string fileNameSpecification = "Спецификация";
+            string fileNamePerechen = "ПЭ";
+            string fileNameVedomost = "ВП";
+            string fileNamePcbSpecification = "Спецификация ПП";
+
+            OsnNadpisItem osnNadpisItem = new OsnNadpisItem();
+
+            // Наименование: 
+            osnNadpisItem = project.GetOsnNadpisItem("1a");
+            docName = osnNadpisItem.specificationValue;
+            pcbDocName = osnNadpisItem.pcbSpecificationValue;
+
+            //Децимальный номер:
+            osnNadpisItem = project.GetOsnNadpisItem("2");
+            docNumber= osnNadpisItem.specificationValue;
+            pcbDocNumber = osnNadpisItem.pcbSpecificationValue;
+
+            // Путь к папке с выходными файлами
+            if (settingsDB.GetItem("outputFolder") == null)
+            {
+                propNameItem.name = "outputFolder";
+                propNameItem.valueString = "DocGostLoc/КД/DocNumber+' '+DocName";
+                folderPath = propNameItem.valueString;
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else
+            {
+                folderPath = settingsDB.GetItem("outputFolder").valueString;
+            }
+
+            string[] folderPathArray = folderPath.Split(new Char[] { '/', '\\' });
+
+            folderPath = String.Empty;
+            folderPathPcb = String.Empty;
+           
+            for (int i = 0;i<folderPathArray.Length; i++)
+            {
+                if (folderPathArray[i].ToLower().Trim() == "prjloc")
+                {
+                    folderPath += System.IO.Path.GetDirectoryName(projectPath) + '\\';
+                    folderPathPcb += System.IO.Path.GetDirectoryName(projectPath) + '\\';
+                }
+                else if (folderPathArray[i].ToLower().Trim() == "docgostloc")
+                {
+                    folderPath = AppDomain.CurrentDomain.BaseDirectory;
+                    folderPathPcb = AppDomain.CurrentDomain.BaseDirectory;
+                }
+                else
+                {
+                    string[] substring = folderPathArray[i].Split(new Char[] { '+' });
+                    folderPathArray[i] = String.Empty;
+                    for (int j = 0; j < substring.Length; j++)
+                    {
+                        if (substring[j].Trim().ToLower() == "docname")
+                        {
+                            folderPath += docName;
+                            folderPathPcb += pcbDocName;
+                        }
+                        else if (substring[j].Trim().ToLower() == "docnumber")
+                        {
+                            folderPath += docNumber;
+                            folderPathPcb += pcbDocNumber;
+                        }
+                        else if (substring[j].Trim().Length >= 1)
+                        {
+                            if ((substring[j].Trim()[0] == '\'') | (substring[j].Trim()[0] == '\"'))
+                                substring[j] = substring[j].Trim().Trim(new Char[] { '\'', '\"' });
+                            else substring[j] = substring[j].Trim();
+
+                            folderPath += substring[j];
+                            folderPathPcb += substring[j];
+                        }
+                        else substring[j] = String.Empty;
+                    }
+                    folderPath += '\\';
+                    folderPathPcb += '\\';
+                }
+            }
+
+            // Названия выходных файлов
+            if (settingsDB.GetItem("outputFile") == null)
+            {
+                propNameItem.name = "outputFile";
+                propNameItem.valueString = "DocNumber+' '+DocType+' '+DocName";
+                fileName = propNameItem.valueString;
+                settingsDB.SaveSettingItem(propNameItem);
+            }
+            else
+            {
+                fileName = settingsDB.GetItem("outputFile").valueString;
+            }
+
+            string[] fileNameArray = fileName.Split(new Char[] { '+' });
+            
+            if (fileNameArray.Length > 0)
+            {
+                fileNameSpecification = String.Empty;
+                fileNameVedomost = String.Empty;
+                fileNamePcbSpecification = String.Empty;
+                fileNamePerechen = String.Empty;
+            }
+           
+            for (int i = 0; i < fileNameArray.Length; i++)
+            {
+                if (fileNameArray[i].Trim().ToLower() == "doctype")
+                {
+                    fileNameSpecification += String.Empty;
+                    fileNameVedomost += "ВП";
+                    fileNamePcbSpecification += String.Empty;
+
+                    string perechenType = project.GetOsnNadpisItem("2").perechenValue;
+                    if (perechenType.Length >= 3)
+                        perechenType = perechenType.Substring(perechenType.Length - 3, 3);
+                    else perechenType = "ПЭ3";
+
+                    fileNamePerechen += perechenType;
+                }
+                else if (fileNameArray[i].Trim().ToLower() == "docname")
+                {
+                    fileNameSpecification += docName;
+                    fileNameVedomost += docName;
+                    fileNamePcbSpecification += pcbDocName;
+                    fileNamePerechen += docName;
+                }
+                else if (fileNameArray[i].Trim().ToLower() == "docnumber")
+                {
+                    fileNameSpecification += docNumber;
+                    fileNameVedomost += docNumber;
+                    fileNamePcbSpecification += pcbDocNumber;
+                    fileNamePerechen += docNumber;
+                }
+                else
+                {
+                   if (fileNameArray[i].Trim().Length >= 1)
+                    {
+                        if ((fileNameArray[i].Trim()[0] == '\'') | (fileNameArray[i].Trim()[0] == '\"'))
+                            fileNameArray[i] = fileNameArray[i].Trim().Trim(new Char[] { '\'', '\"' });
+                        else fileNameArray[i] = fileNameArray[i].Trim();
+                    }
+                    else fileNameArray[i] = String.Empty;
+
+                    fileNameSpecification += fileNameArray[i];
+                    fileNamePerechen += fileNameArray[i];
+                    fileNameVedomost += fileNameArray[i];
+                    fileNamePcbSpecification += fileNameArray[i];
+                }
+                
+            }
+
+            if (fileNameSpecification == fileNamePerechen) fileNamePerechen += "_1";
+            if (fileNameSpecification == fileNameVedomost) fileNameVedomost += "_2";
+            if (fileNameSpecification == fileNamePcbSpecification) fileNamePcbSpecification += "_3";
+
+            //MessageBox.Show(folderPath +Environment.NewLine+folderPathPcb+Environment.NewLine+fileNamePerechen+Environment.NewLine+fileNamePcbSpecification);
+
+            Directory.CreateDirectory(folderPath);
+            //Перечень            
+            string pdfPath = folderPath + fileNamePerechen + ".pdf";
             PdfOperations pdf = new PdfOperations(projectPath);
             int startPage = (startFromSecondCheckBox.IsChecked == false) ? 1 : 2;
             bool addListRegistr = (addListRegistrCheckBox.IsChecked == true);
             pdf.CreatePerechen(pdfPath, startPage, addListRegistr, perTempSave.GetCurrent());
             System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
 
-            pdfPath = "Спецификация.pdf";
+            //Спецификация
+            pdfPath = folderPath + fileNameSpecification + ".pdf";
             pdf = new PdfOperations(projectPath);
             pdf.CreateSpecification(pdfPath, startPage, addListRegistr, specTempSave.GetCurrent());
             System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
 
-            pdfPath = "ВП.pdf";
+            //Ведомость
+            pdfPath = folderPath + fileNameVedomost + ".pdf";
             pdf = new PdfOperations(projectPath);
             pdf.CreateVedomost(pdfPath, startPage, addListRegistr, vedomostTempSave.GetCurrent());
             System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
 
+            //Спецификация ПП
             if (isPcbMultilayer == true) //есил плата - сборочная единица
             {
-                pdfPath = "Спецификация ПП.pdf";
+                Directory.CreateDirectory(folderPathPcb);
+                pdfPath = folderPathPcb + fileNamePcbSpecification + ".pdf";
                 pdf = new PdfOperations(projectPath);
                 pdf.CreatePcbSpecification(pdfPath, startPage, addListRegistr, pcbSpecTempSave.GetCurrent());
                 System.Diagnostics.Process.Start(pdfPath); //открываем pdf файл
@@ -2583,6 +3067,7 @@ namespace DocGOST
             osnNadpis.ShowDialog();
 
             osnNadpis.Close();
+            projectOptionsGroupBox.BorderBrush = new SolidColorBrush(Colors.Green);
         }
 
         /// <summary> Редактирование расшифровок позиционных обозначений </summary>
@@ -3306,6 +3791,11 @@ namespace DocGOST
                 if (vedomostListView.Visibility == Visibility.Visible) vedomostTempSave.SetPrevIfExist();
                 DisplayAllValues();
             }
+        }
+
+        private void startFromSecondCheckBox_Checked()
+        {
+
         }
 
 

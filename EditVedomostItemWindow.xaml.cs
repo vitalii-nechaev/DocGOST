@@ -47,6 +47,7 @@ namespace DocGOST
             supplierRefTextBox.Text = vedomostItem.supplierRef;
             quantityIzdelieTextBox.Text = vedomostItem.quantityIzdelie;
             quantityRegulTextBox.Text = vedomostItem.quantityRegul;
+            quantityComplectsTextBox.Text = vedomostItem.quantityComplects;
             noteTextBox.Text = vedomostItem.note;
             isNameUnderlinedCheckBox.IsChecked = vedomostItem.isNameUnderlined;            
         }
@@ -63,6 +64,7 @@ namespace DocGOST
                 (supplierRefTextBox.Text != vedomostItem.supplierRef) |
                 (quantityIzdelieTextBox.Text != vedomostItem.quantityIzdelie) |
                 (quantityRegulTextBox.Text != vedomostItem.quantityRegul) |
+                (quantityComplectsTextBox.Text != vedomostItem.quantityComplects) |
                 (noteTextBox.Text != vedomostItem.note) |
                 ((bool)isNameUnderlinedCheckBox.IsChecked != vedomostItem.isNameUnderlined))
             {
@@ -91,8 +93,17 @@ namespace DocGOST
                 }
                 vedomostItem.quantityRegul = quantityRegulTextBox.Text;
 
-                if ((quantityIzdelie + quantityRegul) > 0)
-                    vedomostItem.quantityTotal = (quantityIzdelie + quantityRegul).ToString();
+                int quantityComplects = -1;
+
+                while (quantityComplects < 0)
+                {
+                    if (quantityComplectsTextBox.Text == string.Empty) quantityComplects = 0;
+                    else if (int.TryParse(quantityComplectsTextBox.Text, out quantityComplects) == false) quantityComplectsTextBox.Text = vedomostItem.quantityComplects;
+                }
+                vedomostItem.quantityComplects = quantityComplectsTextBox.Text;
+
+                if ((quantityIzdelie + quantityRegul+ quantityComplects) > 0)
+                    vedomostItem.quantityTotal = (quantityIzdelie + quantityRegul+ quantityComplects).ToString();
                 else vedomostItem.quantityTotal = string.Empty;
 
                 vedomostItem.isNameUnderlined = (bool)isNameUnderlinedCheckBox.IsChecked;

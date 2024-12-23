@@ -143,7 +143,9 @@
                             <ColumnDefinition Width="118.5"/>
                             <ColumnDefinition Width="17.5"/>
                             <ColumnDefinition Width="63.5"/>
-                            <ColumnDefinition Width="353*"/>
+                            <ColumnDefinition Width="106*"/>
+                            <ColumnDefinition Width="14*"/>
+                            <ColumnDefinition Width="377*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="23"/>
@@ -152,21 +154,21 @@
                             <RowDefinition Height="40"/>
                             <RowDefinition Height="40"/>
                         </Grid.RowDefinitions>
-                        <Label Grid.Column="0" Content="№ графы" FontWeight="Bold" HorizontalAlignment="Center" Height="25"  VerticalAlignment="Top" Margin="8,0,6,0" Width="66" Grid.RowSpan="2" />
-                        <Label Grid.Column="1" Content="Наименование графы" FontWeight="Bold" HorizontalAlignment="Center" Height="25"  VerticalAlignment="Top" Grid.ColumnSpan="3" Margin="30,0" Grid.RowSpan="2" />
-                        <Label Grid.Column="4" Content="Значение" FontWeight="Bold" HorizontalAlignment="Center" Height="25"  VerticalAlignment="Top" Margin="210,0,213,0" Width="66" Grid.RowSpan="2" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="19" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Margin="28,8,28,9" Width="24" />
-                        <Label Grid.Row="1" Grid.Column="1" x:Name="gr19SpecLabel" Content="Инв. номер подл." HorizontalAlignment="Right" Height="24"  VerticalAlignment="Center" Margin="0,8,10,9" Grid.ColumnSpan="3"/>
-                        <TextBox Grid.Row="1" Grid.Column="4" x:Name="gr19SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="6,8,6,7"/>
-                        <Label Grid.Row="2" Grid.Column="0" Content="21" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Margin="28,9,28,8" Width="24" />
-                        <Label Grid.Row="2" Grid.Column="1" x:Name="gr21SpecLabel" Content="Взамен инв. номера" HorizontalAlignment="Right" Height="24"  VerticalAlignment="Center" Margin="0,9,10,8" Grid.ColumnSpan="3"/>
-                        <TextBox Grid.Row="2" Grid.Column="4" x:Name="gr21SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="6,7,6,8"/>
-                        <Label Grid.Row="3" Grid.Column="0" Content="22" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Margin="28,8,28,9" Width="24" />
-                        <Label Grid.Row="3" Grid.Column="1" x:Name="gr22SpecLabel" Content="Инв. номер дубликата" HorizontalAlignment="Right" Height="24"  VerticalAlignment="Center" Margin="0,8,10,9" Grid.ColumnSpan="3"/>
-                        <TextBox Grid.Row="3" Grid.Column="4" x:Name="gr22SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="6,8,6,7"/>
-                        <Label Grid.Row="4" Grid.Column="0" Content="25" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Margin="28,9,28,8" Width="24" />
-                        <Label Grid.Row="4" Grid.Column="1" x:Name="gr25SpecLabel" Content="Перв. примен." HorizontalAlignment="Right" Height="24"  VerticalAlignment="Center" Margin="0,9,10,8" Grid.ColumnSpan="3"/>
-                        <TextBox Grid.Row="4" Grid.Column="4" x:Name="gr25SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="6,7,6,8"/>
+                        <Label Content="№ графы" FontWeight="Bold" HorizontalAlignment="Center" Height="25"  VerticalAlignment="Center" Width="66" />
+                        <Label Grid.Column="1" Content="Наименование графы" FontWeight="Bold" HorizontalAlignment="Center" Height="25"  VerticalAlignment="Center" Grid.ColumnSpan="3" />
+                        <Label Grid.Column="6" Content="Значение" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Margin="95,0,0,0" Width="66" />
+                        <Label Grid.Row="1" Content="19" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
+                        <Label Grid.Row="1" Grid.Column="1" x:Name="gr19SpecLabel" Content="Инв. номер подл." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="83,0,0,0" Grid.ColumnSpan="3"/>
+                        <TextBox Grid.Row="1" Grid.Column="4" x:Name="gr19SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0" Grid.ColumnSpan="3"/>
+                        <Label Grid.Row="2" Content="21" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
+                        <Label Grid.Row="2" Grid.Column="1" x:Name="gr21SpecLabel" Content="Взамен инв. номера" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="68,0,0,0" Grid.ColumnSpan="3"/>
+                        <TextBox Grid.Row="2" Grid.Column="4" x:Name="gr21SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0" Grid.ColumnSpan="3"/>
+                        <Label Grid.Row="3" Content="22" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
+                        <Label Grid.Row="3" Grid.Column="1" x:Name="gr22SpecLabel" Content="Инв. номер дубликата" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="57,0,0,0" Grid.ColumnSpan="3"/>
+                        <TextBox Grid.Row="3" Grid.Column="4" x:Name="gr22SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0" Grid.ColumnSpan="3"/>
+                        <Label Grid.Row="4" Content="25" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
+                        <Label Grid.Row="4" Grid.Column="1" x:Name="gr25SpecLabel" Content="Перв. примен." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="100,0,0,0" Grid.ColumnSpan="3"/>
+                        <TextBox Grid.Row="4" Grid.Column="4" x:Name="gr25SpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0" Grid.ColumnSpan="3"/>
 
                     </Grid>
                 </ScrollViewer>
@@ -260,8 +262,10 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="26.515"/>
                             <ColumnDefinition Width="0.776"/>
-                            <ColumnDefinition Width="52.709"/>
-                            <ColumnDefinition Width="35.835"/>
+                            <ColumnDefinition Width="33.87"/>
+                            <ColumnDefinition Width="18.839"/>
+                            <ColumnDefinition Width="15.38"/>
+                            <ColumnDefinition Width="20.455"/>
                             <ColumnDefinition Width="164.165"/>
                             <ColumnDefinition Width="353*"/>
                         </Grid.ColumnDefinitions>
@@ -274,27 +278,27 @@
                             <RowDefinition Height="40"/>
                             <RowDefinition Height="40"/>
                         </Grid.RowDefinitions>
-                        <Label Grid.Column="0" Content="№ графы" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Margin="8,0,0,0" Width="66" Grid.ColumnSpan="3" />
-                        <Label Grid.Column="3" Content="Наименование графы" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Grid.ColumnSpan="2" Margin="30,0,0,0" />
-                        <Label Grid.Column="5" Content="Значение" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Margin="214,0,0,0" Width="66" />
-                        <Label Grid.Row="1" Grid.Column="2" Content="1" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="1" Grid.Column="4" x:Name="gr1PcbSpecLabel" Content="Наименование" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="61,0,0,0"/>
-                        <TextBox Grid.Row="1" Grid.Column="5" x:Name="gr1PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
-                        <Label Grid.Row="2" Grid.Column="2" Content="2" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="2" Grid.Column="4" x:Name="gr2PcbSpecLabel" Content="Обозначение" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="69,0,0,0"/>
-                        <TextBox Grid.Row="2" Grid.Column="5" x:Name="gr2PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
-                        <Label Grid.Row="3" Grid.Column="2" Content="19" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="3" Grid.Column="4" x:Name="gr19PcbSpecLabel" Content="Инв. номер подл." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="47,0,0,0"/>
-                        <TextBox Grid.Row="3" Grid.Column="5" x:Name="gr19PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
-                        <Label Grid.Row="4" Grid.Column="2" Content="21" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="4" Grid.Column="4" x:Name="gr21PcbSpecLabel" Content="Взамен инв. номера" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="33,0,0,0"/>
-                        <TextBox Grid.Row="4" Grid.Column="5" x:Name="gr21PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
-                        <Label Grid.Row="5" Grid.Column="2" Content="22" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="5" Grid.Column="4" x:Name="gr22PcbSpecLabel" Content="Инв. номер дубликата" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="21,0,0,0"/>
-                        <TextBox Grid.Row="5" Grid.Column="5" x:Name="gr22PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
-                        <Label Grid.Row="6" Grid.Column="2" Content="25" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" />
-                        <Label Grid.Row="6" Grid.Column="4" x:Name="gr25PcbSpecLabel" Content="Перв. примен." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="65,0,0,0"/>
-                        <TextBox Grid.Row="6" Grid.Column="5" x:Name="gr25PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Column="0" Content="№ графы" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Margin="8,0,0,0" Width="66" Grid.ColumnSpan="4" />
+                        <Label Grid.Column="5" Content="Наименование графы" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Grid.ColumnSpan="2" Margin="15,0,0,0" />
+                        <Label Grid.Column="7" Content="Значение" FontWeight="Bold" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Center" Margin="214,0,0,0" Width="66" />
+                        <Label Grid.Row="1" Grid.Column="2" Content="1" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="1" Grid.Column="6" x:Name="gr1PcbSpecLabel" Content="Наименование" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="61,0,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="7" x:Name="gr1PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Row="2" Grid.Column="2" Content="2" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="2" Grid.Column="6" x:Name="gr2PcbSpecLabel" Content="Обозначение" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="69,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="7" x:Name="gr2PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Row="3" Grid.Column="2" Content="19" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="3" Grid.Column="6" x:Name="gr19PcbSpecLabel" Content="Инв. номер подл." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="47,0,0,0"/>
+                        <TextBox Grid.Row="3" Grid.Column="7" x:Name="gr19PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Row="4" Grid.Column="2" Content="21" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="4" Grid.Column="6" x:Name="gr21PcbSpecLabel" Content="Взамен инв. номера" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="33,0,0,0"/>
+                        <TextBox Grid.Row="4" Grid.Column="7" x:Name="gr21PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Row="5" Grid.Column="2" Content="22" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="5" Grid.Column="6" x:Name="gr22PcbSpecLabel" Content="Инв. номер дубликата" HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="21,0,0,0"/>
+                        <TextBox Grid.Row="5" Grid.Column="7" x:Name="gr22PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
+                        <Label Grid.Row="6" Grid.Column="2" Content="25" HorizontalAlignment="Center" Height="24"  VerticalAlignment="Center" Width="24" Grid.ColumnSpan="2" />
+                        <Label Grid.Row="6" Grid.Column="6" x:Name="gr25PcbSpecLabel" Content="Перв. примен." HorizontalAlignment="Left" Height="24"  VerticalAlignment="Center" Margin="65,0,0,0"/>
+                        <TextBox Grid.Row="6" Grid.Column="7" x:Name="gr25PcbSpecTextBox" Height="26" TextWrapping="Wrap" Text="" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="6,0,6,0"/>
                     </Grid>
                 </ScrollViewer>
             </TabItem>

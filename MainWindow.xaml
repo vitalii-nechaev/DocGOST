@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="ДокГОСТ версия 0.91" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
+        Title="ДокГОСТ версия 1.0" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
@@ -47,8 +47,16 @@
                 <MenuItem x:Name="redoMenuItem" Header="Вернуть" Click="RedoButton_Click" IsEnabled="False" InputGestureText="Ctrl+Y"/>
             </MenuItem>
 
-            <MenuItem Header="Редактирование">
+            <MenuItem Header="Свойства проекта" x:Name="prjOptionsMenuItem" IsEnabled="False">
                 <MenuItem x:Name="osnNadpisMenuItem" Header="Основная надпись" IsEnabled="False" Click="osnNadpisButton_Click" />
+            </MenuItem>
+
+            <MenuItem Header="Настройки глобальные">
+                <MenuItem x:Name="desigDescrMenuItem" Header="Поз. обозначения" Click="desigDescrButton_Click" />
+                <MenuItem x:Name="globalImportSettingsMenuItem" Header="Настройки импорта" Click="globalImportSettingsMenuItem_Click" />
+                <MenuItem x:Name="globalDocumsSettingsMenuItem" Header="Документация на изделие" Click="globalDocumsSettingsMenuItem_Click" />
+                <MenuItem x:Name="globalDocumsPcbSettingsMenuItem" Header="Документация на ПП" Click="globalDocumsPcbSettingsMenuItem_Click" />
+                <MenuItem x:Name="globalExportSettingsMenuItem" Header="Настройки экспорта в pdf" Click="globalExportSettingsMenuItem_Click" />
             </MenuItem>
 
             <MenuItem Header="Справка">
@@ -67,13 +75,36 @@
             </TreeView>
             <GridSplitter Grid.Row="1" Grid.ColumnSpan="1" ResizeDirection="Rows" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             <StackPanel Grid.Column="0" Grid.Row="2" >
-                <Label Content="Редактирование"/>
-                <Button Content="Основная надпись" x:Name="osnNadpisButton" Margin="10,5,10,5" IsEnabled="False" Click="osnNadpisButton_Click"/>
-                <Button x:Name="desigDescrButton" Content="Поз. обозначения" Margin="10,5,10,5" Click="desigDescrButton_Click"/>
-                <Label Content="Настройки экспорта в pdf"/>
-                <CheckBox x:Name="addListRegistrCheckBox" Content="Добавить ЛР" IsChecked="True" Margin="10,0,0,0" HorizontalAlignment="Left"/>
-                <CheckBox x:Name="startFromSecondCheckBox" Content="Нумерация листов с 2" IsChecked="False" Margin="10,0,0,0" HorizontalAlignment="Left"/>
-                <Label x:Name="numberOfValidStringsLabel"/>
+                <GroupBox Margin="5,10" Header="Начало работы" x:Name="createOpenGroupBox">
+                    <Grid Margin="0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Создать проект" Margin="10,5,10,5" Click="CreateProject_Click"/>
+                        <Button Grid.Column="1" Content="Открыть проект" Margin="10,5,10,5" Click="OpenProject_Click"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Margin="5,10" Header="Импорт данных" x:Name="importGroupBox" IsEnabled="False">
+                    <Grid Margin="0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Altium Designer" Margin="10,5,10,5" Click="ImportPrjPcbfromAD_Click"/>
+                        <Button Grid.Column="1" Content="KiCad"  Margin="10,5,10,5" Click="ImportPrjPcbfromAD_Click"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Margin="5,10" Header="Свойства проекта" x:Name="projectOptionsGroupBox" IsEnabled="False">
+                    <StackPanel Margin="0,10">
+                        <Button Content="Основная надпись" x:Name="osnNadpisButton" Margin="10,5,10,5" Click="osnNadpisButton_Click"/>
+                        <Label Content="Параметры экспорта в pdf"/>
+                        <CheckBox x:Name="addListRegistrCheckBox" Content="Добавить ЛР" IsChecked="True" Margin="10,0,0,0" HorizontalAlignment="Left"/>
+                        <CheckBox x:Name="startFromSecondCheckBox" Content="Нумерация листов с 2" IsChecked="False" Margin="10,0,0,0" HorizontalAlignment="Left"/>
+                        <Label x:Name="numberOfValidStringsLabel"/>                        
+                    </StackPanel>                    
+                </GroupBox>
+                <Button x:Name="CreatePdfButton" Content="Экспорт в pdf" Margin="10,10,10,10" IsEnabled="False" Click="CreatePdf_Click"/>
             </StackPanel>
         </Grid>
 

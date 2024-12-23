@@ -317,5 +317,10 @@ namespace DocGOST
             osnNadpisItem.pcbSpecificationValue = "А4";
             project.SaveOsnNadpisItem(osnNadpisItem);
         }
+
+        private void PerechenTypeComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

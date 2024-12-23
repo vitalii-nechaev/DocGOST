@@ -22,6 +22,34 @@ using SQLite;
 
 namespace DocGOST.Data
 {
+    // В базе данных хранятся следующие настройки:
+
+    // designatorPropName - наименование свойства с позиционным обозначением
+    // designatorPropNameKiCad - наименование свойства с позиционным обозначением в KiCad
+    // namePropName - наименование свойства с наименованием компонента
+    // namePropNameKiCad - наименование свойства с наименованием компонента в KiCad
+    // documPropName - наименование свойства с документом на поставку компонента
+    // documPropNameKiCad - наименование свойства с документом на поставку компонента в KiCad
+    // notePropName - наименование свойства с комментарием
+    // notePropNameKiCad - наименование свойства с комментарием в KiCad
+
+    // drawGraf30 - чертить ли графы 27-30 основной надписи (True/False)
+
+    // prjDocNumberPropName - свойств0 с наименованием децимального номера изделия
+    // prjDocNumberPropNameKiCad - свойство с наименованием децимального номера изделия в KiCad
+    // prjNameStr1PropName - свойство с первой строкой наименования изделия
+    // prjNameStr2PropName - свойство со второй строкой наименования изделия
+    // prjNameStr1PropNameeKiCad - свойство с первой строкой наименования изделия в KiCad
+    // prjNameStr2PropNameeKiCad - свойство со второй строкой наименования изделия в KiCad
+    // prjNamePropNameKiCad - свойство с наименованием изделия в KiCad
+    // pcbDocNumberPropName - свойство с наименованием децимального номера платы
+    // pcbDocNumberPropNameKiCad - свойство с наименованием децимального номера платы в KiCad
+    // pcbNameStr1PropName - свойство с первой строкой наименования платы в KiCad
+    // pcbNameStr2PropName - свойство со второй строкой наименования платы в KiCad
+    // pcbNameStr1PropName - свойство с первой строкой наименования платы в KiCad
+    // pcbNameStr2PropName - свойство со второй строкой наименования платы в KiCad
+
+
     class SettingsDB
     {
         SQLiteConnection db;

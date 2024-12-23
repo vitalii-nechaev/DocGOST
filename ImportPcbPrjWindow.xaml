@@ -34,7 +34,7 @@
 
         <WrapPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
             <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
-            <Button x:Name="acceptButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_2_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>            
+            <Button x:Name="nextButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_2_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>            
         </WrapPanel>
         </Grid>
         <Grid x:Name="variantsGrid" Visibility="Hidden">
@@ -54,7 +54,7 @@
 
             <WrapPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,15,0,0">
                 <Button IsCancel="True" ToolTip = "Отменить импорт данных" Margin="0,0,20,0" MinWidth="80">Отмена</Button>
-                <Button x:Name="nextButton" ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_1_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
+                <Button ToolTip = "Приступить к импорту данных" IsDefault="True" Click="Next_1_Click" MinWidth="80" Margin="20,0,0,0">Далее ></Button>
             </WrapPanel>
         </Grid>
         <Grid x:Name="moduleDecimalNumberGrid" Visibility="Visible">

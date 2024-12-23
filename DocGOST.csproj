@@ -142,11 +142,19 @@
     </ApplicationDefinition>
     <Compile Include="Data\ComponentProperties.cs" />
     <Compile Include="Data\DielProperties.cs" />
+    <Compile Include="Data\DocumsDB.cs" />
+    <Compile Include="Data\DocumsItem.cs" />
     <Compile Include="Data\SettingsDB.cs" />
     <Compile Include="Data\SettingsItem.cs" />
     <Compile Include="Data\ParameterItem.cs" />
     <Compile Include="Data\PcbSpecificationItem.cs" />
     <Compile Include="Data\VedomostItem.cs" />
+    <Compile Include="DocumsAddEditWindow.xaml.cs">
+      <DependentUpon>DocumsAddEditWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DocumsWindow.xaml.cs">
+      <DependentUpon>DocumsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="EditPcbSpecItemWindow.xaml.cs">
       <DependentUpon>EditPcbSpecItemWindow.xaml</DependentUpon>
     </Compile>
@@ -160,6 +168,12 @@
     <Compile Include="ImportPcbPrjWindow.xaml.cs">
       <DependentUpon>ImportPcbPrjWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SettingsOfExport.xaml.cs">
+      <DependentUpon>SettingsOfExport.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SettingsOfImport.xaml.cs">
+      <DependentUpon>SettingsOfImport.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SpecificationOperations.cs" />
     <Compile Include="TempSaves.cs" />
     <Compile Include="VariantSelectionWindow.xaml.cs">
@@ -171,6 +185,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DesignatorAddEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DocumsAddEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DocumsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -214,7 +236,6 @@
     <Compile Include="DesignatorAddEditWindow.xaml.cs">
       <DependentUpon>DesignatorAddEditWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DesignatorDescriptions.cs" />
     <Compile Include="EditPerechenItemWindow.xaml.cs">
       <DependentUpon>EditPerechenItemWindow.xaml</DependentUpon>
     </Compile>
@@ -223,6 +244,14 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="OsnNadpisWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SettingsOfExport.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SettingsOfImport.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

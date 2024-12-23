@@ -1,0 +1,57 @@
+﻿<Window x:Class="DocGOST.SettingsOfExport"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DocGOST"
+        mc:Ignorable="d"
+        Title="Настройки экспорта в pdf" Height="500" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="18"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="135"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Row="0" Grid.Column="0" Content="Выходная папка " HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <TextBox x:Name="outputFolderTextBox" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+        <Label Grid.Row="1" Grid.Column="0" Content="Предпросмотр пути " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center" Visibility="Hidden"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Имя pdf-файла" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        <Label Grid.Row="3" Grid.Column="0" Content="Предпросмотр имени " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center" Visibility="Hidden"/>
+        <Label Grid.Row="5" Grid.Column="0" Content="Доступные поля: " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="6" Grid.Column="0" Content="PrjLoc " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="6" Grid.Column="1" Content="Путь к папке с текущим проектом ДокГост" HorizontalAlignment="Left" FontStyle="Italic" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="7" Grid.Column="0" Content="DocGostLoc " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="7" Grid.Column="1" Content="Путь к папке с программой ДокГост" HorizontalAlignment="Left" FontStyle="Italic" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="8" Grid.Column="0" Content="DocNumber " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="8" Grid.Column="1" Content="Децимальный номер изделия/платы" HorizontalAlignment="Left" FontStyle="Italic" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="9" Grid.Column="0" Content="DocType " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="9" Grid.Column="1" Content="Тип документа - ВП, ПЭ3 и т.д." HorizontalAlignment="Left" FontStyle="Italic" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="10" Grid.Column="0" Content="DocName " HorizontalAlignment="Right" Foreground="Gray" VerticalAlignment="Center"/>
+        <Label Grid.Row="10" Grid.Column="1" Content="Наименование изделия или платы" HorizontalAlignment="Left" FontStyle="Italic" Foreground="Gray" VerticalAlignment="Center"/>
+        <TextBox x:Name="outputFileTextBox" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5"/>
+        <CheckBox Grid.Row="12" Grid.ColumnSpan="2" HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="drawGraf30Checkbox" IsChecked="True" Content="Чертить дополнительные графы 27-30 основной надписи"/>
+        <WrapPanel Grid.Row="14" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button IsDefault="True" Click="Accept_Click" MinWidth="80" Margin="0,0,20,0">Сохранить</Button>
+            <Button IsCancel="True" Margin="20,0,0,0" MinWidth="80">Отмена</Button>
+        </WrapPanel>
+       
+    </Grid>
+    
+</Window>
