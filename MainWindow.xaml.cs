@@ -1222,6 +1222,7 @@ namespace DocGOST
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
                 osnNadpisItem.grapha = "25";
+                osnNadpisItem.specificationValue = String.Empty;
                 osnNadpisItem.perechenValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для перечня здесь указываем спецификацию
                 osnNadpisItem.vedomostValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для ведомости здесь указываем спецификацию
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для спецификации ПП здесь указываем спецификацию
@@ -1466,7 +1467,7 @@ namespace DocGOST
 
             string pcbPrjFolderPath = System.IO.Path.GetDirectoryName(pcbPrjFilePath);
 
-            //Открываем файл проекта AD для чтения текстовых переменных проекта:
+            //Открываем файл проекта KiCAD для чтения текстовых переменных проекта:
             FileStream pcbPrjFile = new FileStream(pcbPrjFilePath, FileMode.Open, FileAccess.Read);
             StreamReader pcbPrjReader = new StreamReader(pcbPrjFile, System.Text.Encoding.UTF8);
 
@@ -1526,7 +1527,7 @@ namespace DocGOST
                     else
                     {
                         prjStr = prjStr.Replace("\",", String.Empty);
-                        prjStr = prjStr.Replace('"', new char());
+                        prjStr = prjStr.Replace("\"", String.Empty);
                         string[] paramPrjStrArray = prjStr.Split(new string[] { ": " }, StringSplitOptions.None);
                         int variantNumber = 0;
                         //if (paramPrjStrArray.Length > 1) variantNumber = currentVariant;
@@ -1534,8 +1535,8 @@ namespace DocGOST
 
                         string[] nameValue = new string[2];
 
-                        nameValue[0] = paramPrjStrArray[0];
-                        nameValue[1] = paramPrjStrArray[1];
+                        nameValue[0] = paramPrjStrArray[0].Trim();
+                        nameValue[1] = paramPrjStrArray[1].Trim();
 
                         while (prjParamsVariantList.Count <= variantNumber) prjParamsVariantList.Add(new List<string[]>());
 
@@ -1733,6 +1734,7 @@ namespace DocGOST
                 parameterItem.value = "false";
                 project.SaveParameterItem(parameterItem);
                 plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
+                if (((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count == 4) //если есть спецификация печатной платы, удаляем её
                 ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
             }
             pcbReader.Close();
@@ -1867,8 +1869,8 @@ namespace DocGOST
                 SpecificationItem tempSpecItem = new SpecificationItem();
                 numberOfValidStrings++;
                 tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " СБ";
+                tempSpecItem.format = "А3";
+                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " СБ";
                 tempSpecItem.name = "Сборочный чертёж";
                 tempSpecItem.quantity = String.Empty;
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
@@ -1877,8 +1879,8 @@ namespace DocGOST
                 tempSpecItem = new SpecificationItem();
                 numberOfValidStrings++;
                 tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А1";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Э3";
+                tempSpecItem.format = "А3";
+                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " Э3";
                 tempSpecItem.name = "Схема электрическая принципиальная";
                 tempSpecItem.quantity = String.Empty;
                 tempSpecItem.spSection = (int)Global.SpSections.Documentation;
@@ -2001,6 +2003,7 @@ namespace DocGOST
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
                 osnNadpisItem.grapha = "25";
+                osnNadpisItem.specificationValue = String.Empty;
                 osnNadpisItem.perechenValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для перечня здесь указываем спецификацию
                 osnNadpisItem.vedomostValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для ведомости здесь указываем спецификацию
                 osnNadpisItem.pcbSpecificationValue = importPcbPrjWindow.prjNumberTextBox.Text; //Для спецификации ПП здесь указываем спецификацию
@@ -2076,7 +2079,9 @@ namespace DocGOST
                     }
 
                     #region В случае наличиня исполнений
+
                     bool isDNF = false;
+                    /*
                     int variantIndex = importPcbPrjWindow.variantSelectionComboBox.SelectedIndex;
                     if (variantIndex > 0)
                     {
@@ -2105,9 +2110,10 @@ namespace DocGOST
                         }
 
                     }
-
+                    */
 
                     #endregion
+                    
 
                     if (isDNF == false)
                     {
@@ -2214,16 +2220,33 @@ namespace DocGOST
         {
             int result = 0;
             if (designator.Length > 1)
-            {
+            {                
                 if (Char.IsDigit(designator[1]))
                 {
                     result = ((designator[0]) << 24) + int.Parse(designator.Substring(1, designator.Length - 1));
                 }
-                else
+                else if (designator[1] == '?')
+                {
+                    result = ((designator[0]) << 24) + 0;
+                    MessageBox.Show("В схеме есть не пронумерованный компонент " + designator);
+                }
+                else if (Char.IsDigit(designator[2]))
                 {
                     if (designator.Length >= 3)
                         result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(2, designator.Length - 2));
                 }
+                else if (designator[2] == '?')
+                {
+                    if (designator.Length >= 3)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + 0;
+                    MessageBox.Show("В схеме есть не пронумерованный компонент " + designator);
+                }
+                else if (Char.IsDigit(designator[3])) //Для комонентов с обозначением из 3 букв, например, "PCB1"
+                {
+                    if (designator.Length >= 4)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(3, designator.Length - 3));
+                }
+                
             }
 
             return result;

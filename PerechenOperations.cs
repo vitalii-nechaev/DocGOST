@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Windows;
 using DocGOST.Data;
 
 namespace DocGOST
@@ -36,11 +37,26 @@ namespace DocGOST
             {
                 if (Char.IsDigit(designator[1]))
                 {
-                    result = int.Parse(designator.Substring(1, designator.Length - 1));
+                    result = ((designator[0]) << 24) + int.Parse(designator.Substring(1, designator.Length - 1));
                 }
-                else
+                else if (designator[1] == '?')
                 {
-                    result = int.Parse(designator.Substring(2, designator.Length - 2));
+                    result = ((designator[0]) << 24) + 0;                    
+                }
+                else if (Char.IsDigit(designator[2]))
+                {
+                    if (designator.Length >= 3)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(2, designator.Length - 2));
+                }
+                else if (designator[2] == '?')
+                {
+                    if (designator.Length >= 3)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + 0;
+                }
+                else if (Char.IsDigit(designator[3])) //Для комонентов с обозначением из 3 букв, например, "PCB1"
+                {
+                    if (designator.Length >= 4)
+                        result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(3, designator.Length - 3));
                 }
             }
 

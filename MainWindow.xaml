@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="ДокГОСТ версия 0.91" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
+        Title="ДокГОСТ версия 0.92" Height="1024" Width="1280" Closing="Window_Closing" Icon="Images/GOST icon.png" MinWidth="800" MinHeight="480" SizeChanged="Window_SizeChanged" WindowState="Maximized">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="ApplicationCommands.Undo"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="ApplicationCommands.Redo"/>
