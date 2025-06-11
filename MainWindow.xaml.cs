@@ -107,8 +107,8 @@ namespace DocGOST
             if (createDlg.ShowDialog() == true)
             {
                 if (projectPath == createDlg.FileName)
-                {                   
-                    MessageBox.Show("Выбранный проект уже открыт!");                    
+                {
+                    MessageBox.Show("Выбранный проект уже открыт!");
                 }
                 else
                 {
@@ -222,11 +222,11 @@ namespace DocGOST
                 if (projectPath == openDlg.FileName)
                 {
                     waitMessageLabel.Content = "Пожалуйста, подождите...";
-                    MessageBox.Show("Выбранный проект уже открыт!");                    
+                    MessageBox.Show("Выбранный проект уже открыт!");
                     waitGrid.Visibility = Visibility.Hidden;
                 }
                 else
-                {                    
+                {
                     MessageBoxResult closingDialogResult = MessageBoxResult.No;
                     if ((perTempSave != null) & (specTempSave != null) & (pcbSpecTempSave != null) & (vedomostTempSave != null))
                     {
@@ -323,10 +323,10 @@ namespace DocGOST
                             startFromSecondCheckBox.IsChecked = false;
                         else //если "true"
                             startFromSecondCheckBox.IsChecked = true;
-                        
+
                         //Копируем данные во временные
                         perTempSave = new TempSaves();
-                                                
+
                         int tempLength = project.GetPerechenLength(0);
                         if (tempLength > 0)
                         {
@@ -344,11 +344,11 @@ namespace DocGOST
                             PerechenItem perItem = new PerechenItem();
                             perItem = project.GetPerechenItem(i, 0);
                             perItem.id = id.makeID(i, perTempSave.GetCurrent());
-                            project.AddPerechenItem(perItem);                            
+                            project.AddPerechenItem(perItem);
                         }
                         perTempSave.ProjectSaved();
 
-                       
+
                         tempLength = project.GetSpecLength(0);
 
                         for (int i = 1; i <= tempLength; i++)
@@ -360,7 +360,7 @@ namespace DocGOST
                         }
                         specTempSave.ProjectSaved();
 
-                       
+
                         tempLength = project.GetVedomostLength(0);
 
                         for (int i = 1; i <= tempLength; i++)
@@ -417,7 +417,7 @@ namespace DocGOST
                     waitMessageLabel.Content = "Пожалуйста, подождите...";
                     waitGrid.Visibility = Visibility.Hidden;
 
-                }                
+                }
             }
             else
             {
@@ -911,11 +911,11 @@ namespace DocGOST
                         string pcbPath = System.IO.Path.Combine(pcbPrjFolderPath, prjStr.Substring(13));
 
                         //Открываем файл платы AD для получения данных:
-                        FileStream pcbFile;                        
+                        FileStream pcbFile;
                         try
                         {
                             pcbFile = new FileStream(pcbPath, FileMode.Open, FileAccess.Read);
-                           
+
                         }
                         catch
                         {
@@ -1074,10 +1074,10 @@ namespace DocGOST
             string defaultNamePropName = "PartNumber";
             string defaultDocumPropName = "Manufacturer";
             string defaultNotePropName = "Note";
-                        
-                      
 
-            
+
+
+
 
 
             #region Считывание наименований параметров компонентов из базы данных
@@ -1124,8 +1124,8 @@ namespace DocGOST
             else propNameItem = settingsDB.GetItem("notePropName");
             defaultNotePropName = propNameItem.valueString;
 
-            
-           
+
+
 
             /*// Чтение наименования свойства с децимальным номером платы
             if (settingsDB.GetItem("prjPcbNumberPropName") == null)
@@ -1213,11 +1213,11 @@ namespace DocGOST
                 DocumsDB documsDB = new DocumsDB(false);
 
                 int length = documsDB.GetLength();
-                 
+
                 for (int i = 1; i <= length; i++)
                 {
                     DocumsItem docItem = documsDB.GetItem(i);
-                    
+
                     SpecificationItem tempSpecItem = new SpecificationItem();
                     numberOfValidStrings++;
                     tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
@@ -1228,85 +1228,110 @@ namespace DocGOST
                     tempSpecItem.spSection = (int)Global.SpSections.Documentation;
                     specList.Add(tempSpecItem);
                 }
-                                
 
                 project = new Data.ProjectDB(projectPath);
 
-                DocumsDB documsPcbDB = new DocumsDB(true);
-
-                length = documsPcbDB.GetLength();
-
-                PcbSpecificationItem tempPcbSpecItem;
-
-                int index = 1;
-
-                for (int i = 1; i <= length; i++)
+                if (isPcbMultilayer == false) // Добавляем документацию на ПП и материалы в основную спецификацию
                 {
-                    DocumsItem docItem = documsPcbDB.GetItem(i);
-                    tempPcbSpecItem = new PcbSpecificationItem();
+                    DocumsDB documsPcbDB = new DocumsDB(true);
 
-                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
-                    tempPcbSpecItem.format = docItem.format;
-                    tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
-                    tempPcbSpecItem.name = docItem.name;
-                    tempPcbSpecItem.quantity = String.Empty;
-                    tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
-                    pcbSpecList.Add(tempPcbSpecItem);
-                    index++;
-                }
+                    length = documsPcbDB.GetLength();
 
-                int coreQuantity = 0; //кол-во ядер в стеке платы
-                foreach (DielProperties pcbMaterialItem in pcbMaterialsList)
-                {
-                    tempPcbSpecItem = new PcbSpecificationItem();
-                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
-                    tempPcbSpecItem.format = String.Empty;
-                    tempPcbSpecItem.position = "Авто";
-                    tempPcbSpecItem.oboznachenie = String.Empty;
-                    string name = String.Empty;
-                    if (pcbMaterialItem.DielType == 1)
+                    for (int i = 1; i <= length; i++)
                     {
-                        coreQuantity += pcbMaterialItem.Quantity;
-                        name = "Стеклотекстолит ";
+                        DocumsItem docItem = documsPcbDB.GetItem(i);
+
+                        if (docItem.code != "СБ")
+                        {
+                            SpecificationItem tempSpecItem = new SpecificationItem();
+                            numberOfValidStrings++;
+                            tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                            tempSpecItem.format = docItem.format;
+                            tempSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
+                            tempSpecItem.name = docItem.name;
+                            tempSpecItem.quantity = String.Empty;
+                            tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                            specList.Add(tempSpecItem);
+                        }
+
                     }
-                    else name = "Препрег ";
-                    name += pcbMaterialItem.Name + " ";
-                    name += pcbMaterialItem.Height + " мм";
-                    tempPcbSpecItem.name = name;
-                    tempPcbSpecItem.quantity = pcbMaterialItem.Quantity.ToString();
-                    tempPcbSpecItem.note = String.Empty;
-                    tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
-                    pcbSpecList.Add(tempPcbSpecItem);
-                    index++;
                 }
-
-                int additionalCopperLayersCount = pcbLayersCount - coreQuantity * 2;
-                if (additionalCopperLayersCount > 0)
+                else // Создаём спецификацию на ПП
                 {
-                    tempPcbSpecItem = new PcbSpecificationItem();
-                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
-                    tempPcbSpecItem.format = String.Empty;
-                    tempPcbSpecItem.position = "Авто";
-                    tempPcbSpecItem.oboznachenie = String.Empty;
-                    tempPcbSpecItem.name = "Фольга медная толщиной 18 мкм";
-                    tempPcbSpecItem.quantity = additionalCopperLayersCount.ToString();
-                    tempPcbSpecItem.note = String.Empty;
-                    tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
-                    pcbSpecList.Add(tempPcbSpecItem);
-                }
+                    DocumsDB documsPcbDB = new DocumsDB(true);
 
+                    length = documsPcbDB.GetLength();
+
+                    PcbSpecificationItem tempPcbSpecItem;
+
+                    int index = 1;
+
+                    for (int i = 1; i <= length; i++)
+                    {
+                        DocumsItem docItem = documsPcbDB.GetItem(i);
+                        tempPcbSpecItem = new PcbSpecificationItem();
+
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = docItem.format;
+                        tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
+                        tempPcbSpecItem.name = docItem.name;
+                        tempPcbSpecItem.quantity = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                        index++;
+                    }
+
+                    int coreQuantity = 0; //кол-во ядер в стеке платы
+                    foreach (DielProperties pcbMaterialItem in pcbMaterialsList)
+                    {
+                        tempPcbSpecItem = new PcbSpecificationItem();
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = String.Empty;
+                        tempPcbSpecItem.position = "Авто";
+                        tempPcbSpecItem.oboznachenie = String.Empty;
+                        string name = String.Empty;
+                        if (pcbMaterialItem.DielType == 1)
+                        {
+                            coreQuantity += pcbMaterialItem.Quantity;
+                            name = "Стеклотекстолит ";
+                        }
+                        else name = "Препрег ";
+                        name += pcbMaterialItem.Name + " ";
+                        name += pcbMaterialItem.Height + " мм";
+                        tempPcbSpecItem.name = name;
+                        tempPcbSpecItem.quantity = pcbMaterialItem.Quantity.ToString();
+                        tempPcbSpecItem.note = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                        index++;
+                    }
+
+                    int additionalCopperLayersCount = pcbLayersCount - coreQuantity * 2;
+                    if (additionalCopperLayersCount > 0)
+                    {
+                        tempPcbSpecItem = new PcbSpecificationItem();
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = String.Empty;
+                        tempPcbSpecItem.position = "Авто";
+                        tempPcbSpecItem.oboznachenie = String.Empty;
+                        tempPcbSpecItem.name = "Фольга медная толщиной 18 мкм";
+                        tempPcbSpecItem.quantity = additionalCopperLayersCount.ToString();
+                        tempPcbSpecItem.note = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                    }
+
+                    DisplayPcbSpecValues(pcbSpecList);
+                    //Сохраняем спецификацию для ПП в БД, потому что она не требует сортировки
+                    for (int i = 0; i < pcbSpecList.Count; i++)
+                    {
+                        PcbSpecificationItem sd = pcbSpecList[i];
+                        sd.id = id.makeID(i + 1, pcbSpecTempSave.GetCurrent());
+                        project.AddPcbSpecItem(sd);
+                    }
+                }
 
                 OsnNadpisItem osnNadpisItem = new OsnNadpisItem();
-
-
-                DisplayPcbSpecValues(pcbSpecList);
-                //Сохраняем спецификацию для ПП в БД, потому что она не требует сортировки
-                for (int i = 0; i < pcbSpecList.Count; i++)
-                {
-                    PcbSpecificationItem sd = pcbSpecList[i];
-                    sd.id = id.makeID(i + 1, pcbSpecTempSave.GetCurrent());
-                    project.AddPcbSpecItem(sd);
-                }
 
                 // Наименование изделия:
                 osnNadpisItem.grapha = "1a";
@@ -1382,6 +1407,8 @@ namespace DocGOST
 
 
                 numberOfValidStrings++;
+                plataSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text;
+                plataSpecItem.name = importPcbPrjWindow.pcbName;
                 plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
                 specList.Add(plataSpecItem);
 
@@ -1740,11 +1767,11 @@ namespace DocGOST
                     if (schStr.Trim().Substring(0, 21) == "(property \"Sheetfile\"") //если схема многолистовая, открываем последующие листы
                     {
                         string subsSchPath = String.Empty;
-                        subsSchPath = schStr.Trim().Substring(23, schStr.Trim().Length-24);
+                        subsSchPath = schStr.Trim().Substring(23, schStr.Trim().Length - 24);
                         if (schStr.Trim().Contains(":/") == false) //если относительный путь
                             subsSchPath = System.IO.Path.GetDirectoryName(pcbPrjFilePath) + "/" + subsSchPath;
-                        subsSchPath=subsSchPath.Replace('/','\\');
-                        
+                        subsSchPath = subsSchPath.Replace('/', '\\');
+
                         //Открываем файл схемы KiCad для получения списка параметров электронных компонентов:
                         FileStream subsSchFile = new FileStream(subsSchPath, FileMode.Open, FileAccess.Read);
                         subsSchReader = new StreamReader(subsSchFile, System.Text.Encoding.UTF8);
@@ -1759,8 +1786,8 @@ namespace DocGOST
                 for (int i = 0; i < numOfSchStr; i++)
                 {
                     if (numOfSchStr > 1) schStr = subsSchReader.ReadLine();//если работаем не с первой страницей проекта, считываем очередную строку
-                        
-                    
+
+
                     if (isComponent == true)
                     {
                         if (schStr.Trim() == "(in_bom yes)") isNoBom = false;
@@ -1795,7 +1822,7 @@ namespace DocGOST
 
                             }
 
-                        if ((schStr.Trim() == "(symbol") | (schStr.Trim() == "(sheet_instances") | (schStr== "(kicad_sch")) //Считаем, что описание каждого компонента заканчивается этой фразой
+                        if ((schStr.Trim() == "(symbol") | (schStr.Trim() == "(sheet_instances") | (schStr == "(kicad_sch")) //Считаем, что описание каждого компонента заканчивается этой фразой
                         {
                             if ((isNoBom == false) & (componentPropList.Count > 0) & (isFirstPartOfComponent == true))
                             {
@@ -1915,7 +1942,7 @@ namespace DocGOST
                 project.SaveParameterItem(parameterItem);
                 plataSpecItem.spSection = (int)Global.SpSections.Details;//если однослойная или двухслойная, добавляем плату в раздел "Детали"
                 if (((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count == 4) //если есть спецификация печатной платы, удаляем её
-                ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
+                    ((TreeViewItem)(projectTreeViewItem.Items[0])).Items.RemoveAt(((TreeViewItem)(projectTreeViewItem.Items[0])).Items.Count - 1);
             }
             pcbReader.Close();
 
@@ -1990,8 +2017,8 @@ namespace DocGOST
             else propNameItem = settingsDB.GetItem("notePropNameKiCad");
             defaultKiCadNotePropName = propNameItem.valueString;
 
-           
-             
+
+
             /*drawnByPropNameKiCad
 
             // Чтение наименования свойства с фамилией разработчика
@@ -2065,165 +2092,124 @@ namespace DocGOST
 
                 int numberOfValidStrings = 0;
 
-                /*// Считываем список документации на изделие из базы данных, и добавляем эту документацию в спецификацию
-                DocumsDB desDescr = new DocumsDB(isDocums4Pcb);
+                DocumsDB documsDB = new DocumsDB(false);
 
-                int length = desDescr.GetLength();
-                //Вывод несгруппированных строк в окно программы:
-                List<DocumsItem> result = new List<DocumsItem>(length);
+                int length = documsDB.GetLength();
 
                 for (int i = 1; i <= length; i++)
                 {
-                    DocumsItem dd = desDescr.GetItem(i);
-                    result.Add(dd);
-                }*/
+                    DocumsItem docItem = documsDB.GetItem(i);
 
-                SpecificationItem tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А3";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " СБ";
-                tempSpecItem.name = "Сборочный чертёж";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А3";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text.ToString() + " Э3";
-                tempSpecItem.name = "Схема электрическая принципиальная";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А4";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " ПЭ3";
-                tempSpecItem.name = "Перечень элементов";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                plataSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text;
-                plataSpecItem.name = importPcbPrjWindow.pcbName;
-
-                tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "А3";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " ВП";
-                tempSpecItem.name = "Ведомость покупных изделий";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);
-
-                /*tempSpecItem = new SpecificationItem();
-                numberOfValidStrings++;
-                tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                tempSpecItem.format = "*)";
-                tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " Д33";
-                tempSpecItem.name = "Данные проектирования модуля";
-                tempSpecItem.quantity = String.Empty;
-                tempSpecItem.note = "*) CD-диск";
-                tempSpecItem.spSection = (int)Global.SpSections.Documentation;
-                specList.Add(tempSpecItem);*/
-
-                // Считываем список документации на ПП из базы данных, и добавляем эту документацию в спецификацию на изделие,
-                // если плата однослойная или двухслойная, либо в спецификацию на ПП, если плата многослойная.
-
-                if (isPcbMultilayer==false)
-                {
-                    tempSpecItem = new SpecificationItem();
+                    SpecificationItem tempSpecItem = new SpecificationItem();
                     numberOfValidStrings++;
                     tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
-                    tempSpecItem.format = "*)";
-                    tempSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " Т5М";
-                    tempSpecItem.name = "Данные проектирования";
+                    tempSpecItem.format = docItem.format;
+                    tempSpecItem.oboznachenie = importPcbPrjWindow.prjNumberTextBox.Text + " " + docItem.code;
+                    tempSpecItem.name = docItem.name;
                     tempSpecItem.quantity = String.Empty;
-                    tempSpecItem.note = "*) CD-диск";
                     tempSpecItem.spSection = (int)Global.SpSections.Documentation;
                     specList.Add(tempSpecItem);
-                }               
-                                
+                }
+
                 project = new Data.ProjectDB(projectPath);
 
-                PcbSpecificationItem tempPcbSpecItem = new PcbSpecificationItem();
-                tempPcbSpecItem.id = id.makeID(1, specTempSave.GetCurrent());
-                tempPcbSpecItem.format = "А1";
-                tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " СБ";
-                tempPcbSpecItem.name = "Сборочный чертёж";
-                tempPcbSpecItem.quantity = String.Empty;
-                tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
-                pcbSpecList.Add(tempPcbSpecItem);
+                DocumsDB documsPcbDB = new DocumsDB(true);
 
-                tempPcbSpecItem = new PcbSpecificationItem();
-                tempPcbSpecItem.id = id.makeID(2, specTempSave.GetCurrent());
-                tempPcbSpecItem.format = "*)";
-                tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " Т5М";
-                tempPcbSpecItem.name = "Данные проектирования";
-                tempPcbSpecItem.quantity = String.Empty;
-                tempPcbSpecItem.note = "*) CD-диск";
-                tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
-                pcbSpecList.Add(tempPcbSpecItem);
+                length = documsPcbDB.GetLength();
 
-                int index = 3;
-                int coreQuantity = 0; //кол-во ядер в стеке платы
-                foreach (DielProperties pcbMaterialItem in pcbMaterialsList)
+                if (isPcbMultilayer == false) // Добавляем документацию на ПП и материалы в основную спецификацию
                 {
-                    tempPcbSpecItem = new PcbSpecificationItem();
-                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
-                    tempPcbSpecItem.format = String.Empty;
-                    tempPcbSpecItem.position = "Авто";
-                    tempPcbSpecItem.oboznachenie = String.Empty;
-                    string name = String.Empty;
-                    if (pcbMaterialItem.DielType == 1)
+                    for (int i = 1; i <= length; i++)
                     {
-                        coreQuantity += pcbMaterialItem.Quantity;
-                        name = "Стеклотекстолит ";
+                        DocumsItem docItem = documsPcbDB.GetItem(i);
+
+                        if (docItem.code != "СБ")
+                        {
+                            SpecificationItem tempSpecItem = new SpecificationItem();
+                            numberOfValidStrings++;
+                            tempSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
+                            tempSpecItem.format = docItem.format;
+                            tempSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
+                            tempSpecItem.name = docItem.name;
+                            tempSpecItem.quantity = String.Empty;
+                            tempSpecItem.spSection = (int)Global.SpSections.Documentation;
+                            specList.Add(tempSpecItem);
+                        }
+
                     }
-                    else name = "Препрег ";
-                    name += pcbMaterialItem.Name + " ";
-                    name += pcbMaterialItem.Height + " мм";
-                    tempPcbSpecItem.name = name;
-                    tempPcbSpecItem.quantity = pcbMaterialItem.Quantity.ToString();
-                    tempPcbSpecItem.note = String.Empty;
-                    tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
-                    pcbSpecList.Add(tempPcbSpecItem);
-                    index++;
                 }
-
-                int additionalCopperLayersCount = pcbLayersCount - coreQuantity * 2;
-                if (additionalCopperLayersCount > 0)
+                else // Создаём спецификацию на ПП
                 {
-                    tempPcbSpecItem = new PcbSpecificationItem();
-                    tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
-                    tempPcbSpecItem.format = String.Empty;
-                    tempPcbSpecItem.position = "Авто";
-                    tempPcbSpecItem.oboznachenie = String.Empty;
-                    tempPcbSpecItem.name = "Фольга медная толщиной 18 мкм";
-                    tempPcbSpecItem.quantity = additionalCopperLayersCount.ToString();
-                    tempPcbSpecItem.note = String.Empty;
-                    tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
-                    pcbSpecList.Add(tempPcbSpecItem);
+
+                    PcbSpecificationItem tempPcbSpecItem;
+
+                    int index = 1;
+
+                    for (int i = 1; i <= length; i++)
+                    {
+                        DocumsItem docItem = documsPcbDB.GetItem(i);
+                        tempPcbSpecItem = new PcbSpecificationItem();
+
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = docItem.format;
+                        tempPcbSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text + " " + docItem.code;
+                        tempPcbSpecItem.name = docItem.name;
+                        tempPcbSpecItem.quantity = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Documentation;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                        index++;
+                    }
+
+                    int coreQuantity = 0; //кол-во ядер в стеке платы
+                    foreach (DielProperties pcbMaterialItem in pcbMaterialsList)
+                    {
+                        tempPcbSpecItem = new PcbSpecificationItem();
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = String.Empty;
+                        tempPcbSpecItem.position = "Авто";
+                        tempPcbSpecItem.oboznachenie = String.Empty;
+                        string name = String.Empty;
+                        if (pcbMaterialItem.DielType == 1)
+                        {
+                            coreQuantity += pcbMaterialItem.Quantity;
+                            name = "Стеклотекстолит ";
+                        }
+                        else name = "Препрег ";
+                        name += pcbMaterialItem.Name + " ";
+                        name += pcbMaterialItem.Height + " мм";
+                        tempPcbSpecItem.name = name;
+                        tempPcbSpecItem.quantity = pcbMaterialItem.Quantity.ToString();
+                        tempPcbSpecItem.note = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                        index++;
+                    }
+
+                    int additionalCopperLayersCount = pcbLayersCount - coreQuantity * 2;
+                    if (additionalCopperLayersCount > 0)
+                    {
+                        tempPcbSpecItem = new PcbSpecificationItem();
+                        tempPcbSpecItem.id = id.makeID(index, specTempSave.GetCurrent());
+                        tempPcbSpecItem.format = String.Empty;
+                        tempPcbSpecItem.position = "Авто";
+                        tempPcbSpecItem.oboznachenie = String.Empty;
+                        tempPcbSpecItem.name = "Фольга медная толщиной 18 мкм";
+                        tempPcbSpecItem.quantity = additionalCopperLayersCount.ToString();
+                        tempPcbSpecItem.note = String.Empty;
+                        tempPcbSpecItem.spSection = (int)Global.SpSections.Materials;
+                        pcbSpecList.Add(tempPcbSpecItem);
+                    }
+
+                    DisplayPcbSpecValues(pcbSpecList);
+                    //Сохраняем спецификацию для ПП в БД, потому что она не требует сортировки
+                    for (int i = 0; i < pcbSpecList.Count; i++)
+                    {
+                        PcbSpecificationItem sd = pcbSpecList[i];
+                        sd.id = id.makeID(i + 1, pcbSpecTempSave.GetCurrent());
+                        project.AddPcbSpecItem(sd);
+                    }
                 }
-
-
                 OsnNadpisItem osnNadpisItem = new OsnNadpisItem();
-
-
-                DisplayPcbSpecValues(pcbSpecList);
-                //Сохраняем спецификацию для ПП в БД, потому что она не требует сортировки
-                for (int i = 0; i < pcbSpecList.Count; i++)
-                {
-                    PcbSpecificationItem sd = pcbSpecList[i];
-                    sd.id = id.makeID(i + 1, pcbSpecTempSave.GetCurrent());
-                    project.AddPcbSpecItem(sd);
-                }
-
                 // Наименование изделия:
                 osnNadpisItem.grapha = "1a";
                 osnNadpisItem.specificationValue = importPcbPrjWindow.prjName;
@@ -2297,6 +2283,8 @@ namespace DocGOST
                 project.SaveOsnNadpisItem(osnNadpisItem);
 
                 numberOfValidStrings++;
+                plataSpecItem.oboznachenie = importPcbPrjWindow.pcbNumberTextBox.Text;
+                plataSpecItem.name = importPcbPrjWindow.pcbName;
                 plataSpecItem.id = id.makeID(numberOfValidStrings, specTempSave.GetCurrent());
                 specList.Add(plataSpecItem);
 
@@ -2402,7 +2390,7 @@ namespace DocGOST
                     */
 
                     #endregion
-                    
+
 
                     if (isDNF == false)
                     {
@@ -2509,7 +2497,7 @@ namespace DocGOST
         {
             int result = 0;
             if (designator.Length > 1)
-            {                
+            {
                 if (Char.IsDigit(designator[1]))
                 {
                     result = ((designator[0]) << 24) + int.Parse(designator.Substring(1, designator.Length - 1));
@@ -2535,7 +2523,7 @@ namespace DocGOST
                     if (designator.Length >= 4)
                         result = ((designator[0]) << 24) + (designator[1] << 16) + int.Parse(designator.Substring(3, designator.Length - 3));
                 }
-                
+
             }
 
             return result;
@@ -2797,7 +2785,7 @@ namespace DocGOST
 
             //Децимальный номер:
             osnNadpisItem = project.GetOsnNadpisItem("2");
-            docNumber= osnNadpisItem.specificationValue;
+            docNumber = osnNadpisItem.specificationValue;
             pcbDocNumber = osnNadpisItem.pcbSpecificationValue;
 
             // Путь к папке с выходными файлами
@@ -2817,8 +2805,8 @@ namespace DocGOST
 
             folderPath = String.Empty;
             folderPathPcb = String.Empty;
-           
-            for (int i = 0;i<folderPathArray.Length; i++)
+
+            for (int i = 0; i < folderPathArray.Length; i++)
             {
                 if (folderPathArray[i].ToLower().Trim() == "prjloc")
                 {
@@ -2876,7 +2864,7 @@ namespace DocGOST
             }
 
             string[] fileNameArray = fileName.Split(new Char[] { '+' });
-            
+
             if (fileNameArray.Length > 0)
             {
                 fileNameSpecification = String.Empty;
@@ -2884,7 +2872,7 @@ namespace DocGOST
                 fileNamePcbSpecification = String.Empty;
                 fileNamePerechen = String.Empty;
             }
-           
+
             for (int i = 0; i < fileNameArray.Length; i++)
             {
                 if (fileNameArray[i].Trim().ToLower() == "doctype")
@@ -2916,7 +2904,7 @@ namespace DocGOST
                 }
                 else
                 {
-                   if (fileNameArray[i].Trim().Length >= 1)
+                    if (fileNameArray[i].Trim().Length >= 1)
                     {
                         if ((fileNameArray[i].Trim()[0] == '\'') | (fileNameArray[i].Trim()[0] == '\"'))
                             fileNameArray[i] = fileNameArray[i].Trim().Trim(new Char[] { '\'', '\"' });
@@ -2929,7 +2917,7 @@ namespace DocGOST
                     fileNameVedomost += fileNameArray[i];
                     fileNamePcbSpecification += fileNameArray[i];
                 }
-                
+
             }
 
             if (fileNameSpecification == fileNamePerechen) fileNamePerechen += "_1";
