@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Настройки импорта" Height="900" Width="600">
+        Title="Настройки импорта" Icon="Images/GOST icon.png" Height="900" Width="600">
     <Grid>
 
         <Grid.RowDefinitions>

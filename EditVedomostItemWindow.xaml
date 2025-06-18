@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Редактирование строки перечня" Height="538.5" Width="457.5">
+        Title="Редактирование строки перечня" Icon="Images/GOST icon.png" Height="538.5" Width="457.5">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>

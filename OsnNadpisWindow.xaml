@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Основная надпись" Height="600" Width="800">
+        Title="Основная надпись" Icon="Images/GOST icon.png" Height="600" Width="800">
 
     <Grid>
 

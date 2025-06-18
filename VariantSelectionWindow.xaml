@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Выбор исполнения" Height="240" Width="480" MaxHeight="240" MaxWidth="480" MinHeight="240" MinWidth="480">
+        Title="Выбор исполнения" Icon="Images/GOST icon.png" Height="240" Width="480" MaxHeight="240" MaxWidth="480" MinHeight="240" MinWidth="480">
     <Grid>
         <StackPanel VerticalAlignment="Stretch">
             <Label Content="Выберите исполнение (Variant):" HorizontalAlignment="Center" Margin="0,30,0,0"/>

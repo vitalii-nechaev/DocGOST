@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DocGOST"
         mc:Ignorable="d"
-        Title="Настройки экспорта в pdf" Height="500" Width="800">
+        Title="Настройки экспорта в pdf" Icon="Images/GOST icon.png" Height="500" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
